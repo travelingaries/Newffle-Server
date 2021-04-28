@@ -3,12 +3,22 @@ import dbconfig from './dbconfig.json';
 
 export function connect(): mysql.Connection {
     const con:mysql.Connection = mysql.createConnection(dbconfig);
-    con.connect();
+    con.connect(function(err) {
+        if(err) {
+            return console.error('error: '+err.message);
+        }
+        console.log('Connected to the MySQL server');
+    });
     return con;
 }
 
 export function close(con: mysql.Connection) {
-    con.end();
+    con.end(function(err) {
+        if(err) {
+            return console.error('error: '+err.message);
+        }
+        console.log('Closed the MySQL database connection');
+    });
 }
 
 export function insert(query: string, params: any[], con?: mysql.Connection) : Promise<void> {
