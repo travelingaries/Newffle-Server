@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>뉴스 추가하기</title>
+    <link rel="stylesheet" type="text/css" href="/stylesheets/news.css" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+<body>
+<div id="container">
+    <h1>뉴스 추가하기</h1>
+    <form id="add-news-form" method="post">
+        <input type="text" name="title" placeholder="제목" required/>
+        <input type="text" name="from" placeholder="출처" required/>
+        <input type="text" name="url" placeholder="url" required/>
+        <textarea name="body" rows="5" placeholder="본문 일부" required></textarea>
+        <input type="text" name="categories" placeholder="분야 , 로 구분해서 (예: 반도체,연예)" required/>
+        <input type="submit" id="add-news-btn" value="뉴스 저장"/>
+    </form>
+    <h4>현재까지 저장된 분야들</h4>
+    <% categories.forEach((category, index) => {%>
+        <div onclick="addCategory">
+            <p class="categories" id="category-<%= index %>")><%= category %></p>
+        </div>
+    <%}) %>
+</div>
+<script>
+    $(document).ready(function() {
+        <% categories.forEach((category, index) => {%>
+        $('#category-<%= index %>').click(() => {
+            let categoriesInput = document.querySelector('input[name=categories]');
+            if(categoriesInput.value == "") {
+                categoriesInput.value = '<%= category%>';
+            } else {
+                categoriesInput.value = categoriesInput.value + ',' + '<%= category%>';
+            }
+        });
+        <%}) %>
+    });
+</script>
+</body>
+<script src="../scripts/http.js"></script>
+<script src="../scripts/add_news.js"></script>
+</html>

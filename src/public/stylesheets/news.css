@@ -1,0 +1,33 @@
+@import url('https://fonts.googleapis.com/css?family=Nanum+Gothic:400,700,800');
+
+#container {
+    width: 320px;
+    margin: 0 auto;
+    padding-top: 20px;
+    font-family: 'Nanum Gothic';
+}
+h1 {
+    font-size: 24px;
+}
+#add-news-form {
+    display: block;
+}
+#add-news-form input, #add-news-form textarea {
+    display: block;
+    width: 300px;
+    margin-bottom: 12px;
+}
+
+#add-news-form input[type="submit"] {
+    height: 36px;
+    background-color: #ff7752;
+    border-radius: 3px;
+    border: 1px solid #363636;
+    width: 308px;
+    cursor: pointer;
+}
+
+.categories {
+    font-size: 14px;
+    cursor: pointer;
+}
