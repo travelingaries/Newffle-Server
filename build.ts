@@ -12,6 +12,8 @@ logger.timestamp = false;
 
 (async () => {
     try {
+        // Remove current build
+        await remove('./dist/');
         // Copy front-end files
         await copy('./src/public', './dist/src/public');
         await copy('./src/views', './dist/src/views');
@@ -19,6 +21,14 @@ logger.timestamp = false;
         logger.err(err);
     }
 })();
+
+function remove(loc: string): Promise<void> {
+    return new Promise((res, rej) => {
+        return fs.remove(loc, (err) => {
+            return (!!err ? rej(err) : res());
+        });
+    });
+}
 
 function copy(src: string, dest: string): Promise<void> {
     return new Promise((res, rej) => {
