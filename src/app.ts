@@ -123,8 +123,8 @@ app.post('/admin/add_news', (req: Request, res: Response) => {
 });
 app.post('/account/signup', (req: Request, res: Response) => {
     let data:any = req.body;
-    let create_user_sql = "INSERT INTO `users`(`email`, `password`, `fcm_token`, `signup_from`) VALUES (?, ?, ?, ?)";
-    pool.query(create_user_sql, [data.email, Md5.hashStr(data.password), data.fcm_token, data.signup_from], (err, results:OkPacket, fields) => {
+    let create_user_sql = "INSERT INTO `users`(`email`, `password`, `fcm_token`, `signup_from`, `firebase_uid`) VALUES (?, ?, ?, ?, ?)";
+    pool.query(create_user_sql, [data.email, Md5.hashStr(data.password), data.fcm_token, data.signup_from, data.firebase_uid], (err, results:OkPacket, fields) => {
         if (err) {
             console.error(err.message);
             res.sendStatus(400);
