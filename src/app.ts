@@ -1,6 +1,7 @@
 import cookieParser from 'cookie-parser';
 import path from 'path';
 import express, {NextFunction, Request, Response } from 'express';
+import {Md5} from 'ts-md5/dist/md5';
 
 // logger
 import Logger from 'jet-logger';
@@ -118,6 +119,32 @@ app.post('/admin/add_news', (req: Request, res: Response) => {
                 }
             });
         });
+    });
+});
+app.post('/account/signup', (req: Request, res: Response) => {
+    let data:any = req.body;
+    let create_user_sql = "INSERT INTO `users`(`email`, `password`, `fcm_token`, `signup_from`) VALUES (?, ?, ?, ?)";
+    pool.query(create_user_sql, [data.email, Md5.hashStr(data.password), data.fcm_token, data.signup_from], (err, results:OkPacket, fields) => {
+        if (err) {
+            console.error(err.message);
+            res.sendStatus(400);
+        }
+        res.sendStatus(200);
+    });
+});
+app.post('/account/login', (req: Request, res: Response) => {
+    let data:any = req.body;
+    let login_user_sql = "SELECT * FROM `users` WHERE email=? AND password=?";
+    pool.query(login_user_sql, [data.email, Md5.hashStr(data.password)], (err, results:RowDataPacket[], fields) => {
+        if (err) {
+            console.error(err.message);
+            res.sendStatus(400);
+        } else if (results.length < 1) {
+            console.log('no user found for email : ', data.email);
+            res.sendStatus(400);
+        } else {
+            res.sendStatus(200);
+        }
     });
 });
 
