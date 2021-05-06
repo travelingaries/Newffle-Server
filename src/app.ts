@@ -123,15 +123,16 @@ app.post('/admin/add_news', (req: Request, res: Response) => {
     });
 });
 app.post('/user/categories', (req: Request, res: Response) => {
-    console.log('got here 0');
+    console.log('start categories');
     let data:any = req.body;
+    console.log(data);
     let insert_category_sql = "INSERT INTO user_category_subscriptions(user_idx, category_idx, status) VALUES(?, ?, ?)";
     pool.query(insert_category_sql, [data.user_idx, data.category_idx, 1], (err, results:RowDataPacket[], fields) => {
         if (err) {
             console.error(err.message);
             res.sendStatus(400);
         }
-        console.log('got here');
+        console.log('got here', results);
         res.sendStatus(200);
     });
 });
@@ -146,6 +147,19 @@ app.get('/user/find_user_idx/:uid', (req: Request, res: Response) => {
        } else {
            res.json(results[0].idx);
        }
+    });
+});
+app.get('/news/find_category_idx/:category', (req: Request, res: Response) => {
+    let category_sql = "SELECT * FROM news_categories WHERE category=?";
+    pool.query(category_sql, [req.params.category], (err, results: RowDataPacket[], fields) => {
+        if (err) {
+            console.error('err.message');
+            res.sendStatus(400);
+        } else if(results.length < 1) {
+            res.sendStatus(404);
+        } else {
+            res.json(results[0].idx);
+        }
     });
 });
 app.get('/user/categories/:uid', (req: Request, res: Response) => {
