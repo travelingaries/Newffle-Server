@@ -1,6 +1,6 @@
 import cookieParser from 'cookie-parser';
 import path from 'path';
-import express, {NextFunction, Request, Response } from 'express';
+import express, {NextFunction, Request, RequestHandler, Response} from 'express';
 import {Md5} from 'ts-md5/dist/md5';
 
 // logger
@@ -12,12 +12,10 @@ import mysql, {Pool, PoolConnection} from 'mysql';
 import dbconfig from './config/dbconfig.json';
 const pool:Pool = mysql.createPool(dbconfig);
 import {OkPacket, RowDataPacket} from "mysql";
-import ErrnoException = NodeJS.ErrnoException;
-import {find} from "tslint/lib/utils";
 
-const app = express();
-app.use(express.json());
-app.use(express.urlencoded({extended: true}));
+const app: express.Express = express();
+app.use(express.json() as RequestHandler);
+app.use(express.urlencoded({extended: true}) as RequestHandler);
 // Cookie Properties
 export const cookieProps = Object.freeze({
     key: 'ExpressGeneratorTs',
