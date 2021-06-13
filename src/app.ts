@@ -40,7 +40,7 @@ app.use(express.static(staticDir));
 
 // routes
 app.get('/', (req: Request, res: Response) => {
-    res.redirect('/admin/add_news');
+    res.sendStatus(200);
 });
 app.get('/admin', (req: Request, res: Response) => {
     res.render('login');
