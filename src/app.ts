@@ -121,16 +121,13 @@ app.post('/admin/add_news', (req: Request, res: Response) => {
     });
 });
 app.post('/user/categories', (req: Request, res: Response) => {
-    console.log('start categories');
     let data:any = req.body;
-    console.log(data);
-    let insert_category_sql = "INSERT INTO user_category_subscriptions(user_idx, category_idx, status) VALUES(?, ?, ?)";
-    pool.query(insert_category_sql, [data.user_idx, data.category_idx, 1], (err, results:RowDataPacket[], fields) => {
+    let insert_category_sql = "INSERT INTO user_category_subscriptions(user_idx, category_idx, status, notification_option) VALUES(?, ?, ?, ?)";
+    pool.query(insert_category_sql, [data.user_idx, data.category_idx, 1, 1], (err, results:RowDataPacket[], fields) => {
         if (err) {
             console.error(err.message);
             res.sendStatus(400);
         }
-        console.log('got here', results);
         res.sendStatus(200);
     });
 });
@@ -138,7 +135,7 @@ app.get('/user/find_user_idx/:uid', (req: Request, res: Response) => {
     let uid_sql = "SELECT * FROM users WHERE firebase_uid=?";
     pool.query(uid_sql, [req.params.uid], (err, results: RowDataPacket[], fields) => {
        if (err) {
-           console.error('err.message');
+           console.error(err.message);
            res.sendStatus(400);
        } else if(results.length < 1) {
            res.sendStatus(404);
@@ -151,7 +148,7 @@ app.get('/news/find_category_idx/:category', (req: Request, res: Response) => {
     let category_sql = "SELECT * FROM news_categories WHERE category=?";
     pool.query(category_sql, [req.params.category], (err, results: RowDataPacket[], fields) => {
         if (err) {
-            console.error('err.message');
+            console.error(err.message);
             res.sendStatus(400);
         } else if(results.length < 1) {
             res.sendStatus(404);
@@ -215,26 +212,31 @@ app.post('/news/find_category_idx', (req: Request, res: Response) => {
 });
 app.post('/account/signup', (req: Request, res: Response) => {
     let data:any = req.body;
+    console.log(data);
     let create_user_sql = "INSERT INTO `users`(`email`, `password`, `fcm_token`, `signup_from`, `firebase_uid`) VALUES (?, ?, ?, ?, ?)";
     pool.query(create_user_sql, [data.email, Md5.hashStr(data.password), data.fcm_token, data.signup_from, data.firebase_uid], (err, results:OkPacket, fields) => {
         if (err) {
             console.error(err.message);
             res.sendStatus(400);
         }
+        console.log(results);
         res.sendStatus(200);
     });
 });
 app.post('/account/login', (req: Request, res: Response) => {
     let data:any = req.body;
+    console.log(data);
     let login_user_sql = "SELECT * FROM `users` WHERE email=? AND password=?";
     pool.query(login_user_sql, [data.email, Md5.hashStr(data.password)], (err, results:RowDataPacket[], fields) => {
         if (err) {
             console.error(err.message);
             res.sendStatus(400);
         } else if (results.length < 1) {
+            console.log(results);
             console.log('no user found for email : ', data.email);
             res.sendStatus(400);
         } else {
+            console.log('success!');
             res.sendStatus(200);
         }
     });
