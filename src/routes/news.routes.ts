@@ -8,7 +8,7 @@ import {OkPacket, RowDataPacket} from "mysql";
 
 const newsRouter = Router();
 
-newsRouter.get('/news/find_category_idx/:category', (req: Request, res: Response) => {
+newsRouter.get('/find_category_idx/:category', (req: Request, res: Response) => {
     let category_sql = "SELECT * FROM news_categories WHERE category=?";
     pool.query(category_sql, [req.params.category], (err, results: RowDataPacket[], fields) => {
         if (err) {
@@ -21,7 +21,7 @@ newsRouter.get('/news/find_category_idx/:category', (req: Request, res: Response
         }
     });
 });
-newsRouter.get('/news/categories', (req: Request, res: Response) => {
+newsRouter.get('/categories', (req: Request, res: Response) => {
     let categories_sql = "SELECT * FROM `news_categories`";
     pool.query(categories_sql, [], (err, results:RowDataPacket[], fields) => {
         if (err) {
@@ -35,7 +35,7 @@ newsRouter.get('/news/categories', (req: Request, res: Response) => {
         res.json(categories);
     });
 });
-newsRouter.get('/news/news_in_category/:category_idx', (req: Request, res: Response) => {
+newsRouter.get('/news_in_category/:category_idx', (req: Request, res: Response) => {
     let news_in_categories_sql = "SELECT * FROM `news` JOIN `news_categories_map` ON news_categories_map.news_idx = news.idx WHERE news_categories_map.category_idx=?";
     pool.query(news_in_categories_sql, [req.params.category_idx], (err, results:RowDataPacket[], fields) => {
         if(err) {
@@ -45,7 +45,7 @@ newsRouter.get('/news/news_in_category/:category_idx', (req: Request, res: Respo
         res.json(results);
     });
 });
-newsRouter.post('/news/find_category_idx', (req: Request, res: Response) => {
+newsRouter.post('/find_category_idx', (req: Request, res: Response) => {
     let data:any = req.body;
     let find_category_idx_sql = "SELECT * FROM `news_categories` WHERE category=?";
     pool.query(find_category_idx_sql, [data.category], (err, results:RowDataPacket[], fields) => {
