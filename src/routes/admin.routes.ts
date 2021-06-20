@@ -33,7 +33,7 @@ async function saveNewsCategoriesMap(categoryIdx:number, newsIdx:number) {
     let mapSql:string = "INSERT INTO `news_categories_map`(`category_idx`, `news_idx`) VALUES (?, ?)";
 
     try {
-        const [insertResult] = await pool.promise().query(mapSql);
+        const [insertResult] = await pool.promise().query(mapSql, [categoryIdx, newsIdx]);
     } catch(err) {
         console.error(err);
         throw err;
