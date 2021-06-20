@@ -1,44 +1,10 @@
 import {Request, Response, Router} from 'express';
 import {RowDataPacket} from "mysql";
+import {saveNewsCategoriesMap, updateCategories} from "../libraries/news_library";
 
 const { pool } = require('../helpers/database');
 
 const adminRouter = Router();
-
-// 분야가 이미 db에 저장되어 있지 않다면 추가
-async function updateCategories(category:string) {
-    let categorySql = "SELECT * FROM `news_categories` WHERE `category` = ?";
-
-    try {
-        const [queryResults] = await pool.promise().query(categorySql, [category]);
-        if(!queryResults[0]) {
-            let insertCategorySql:string = "INSERT INTO `news_categoryes`(`category`) VALUES (?)";
-            try {
-                const [insertResult] = await pool.promise().query(insertCategorySql, [category]);
-                return insertResult.insertId;
-            } catch(err) {
-                console.error(err.message);
-                throw err;
-            }
-        } else {
-            return queryResults[0].idx;
-        }
-    } catch(err) {
-        console.error(err.message);
-        throw err;
-    }
-}
-// 뉴스와 분야 map db에 저장
-async function saveNewsCategoriesMap(categoryIdx:number, newsIdx:number) {
-    let mapSql:string = "INSERT INTO `news_categories_map`(`category_idx`, `news_idx`) VALUES (?, ?)";
-
-    try {
-        const [insertResult] = await pool.promise().query(mapSql, [categoryIdx, newsIdx]);
-    } catch(err) {
-        console.error(err);
-        throw err;
-    }
-}
 
 adminRouter.get('/add_news', async (req: Request, res: Response) => {
     let categorySql:string = "SELECT * FROM `news_categories` ORDER BY `idx` ASC";
