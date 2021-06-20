@@ -1,11 +1,29 @@
 import {Request, Response, Router} from 'express';
 import {Md5} from 'ts-md5/dist/md5';
-import {OkPacket, RowDataPacket} from "mysql2";
 
 const { pool } = require('../helpers/database');
 
 const accountRouter = Router();
 
+async function checkUserExists(email: String) {
+    let checkUserExistsSql = "SELECT * FROM `users` WHERE email=?";
+    let userExists = false;
+    try {
+        const [queryResult] = await pool.promise().query(checkUserExistsSql, [email]);
+        userExists = Boolean(queryResult[0]);
+    } catch(err) {
+        console.error(err.message);
+        throw err;
+    } finally {
+        return userExists;
+    }
+}
+async function updateUserDeviceDataFlow(userIdx: number, data: { os: String; version: String; osVersion: String; fcmToken: String; }) {
+    const deviceInfoIdx: number = await updateUserDeviceData(userIdx, data.os, data.version, data.osVersion);
+    await updateUserDeviceLog(userIdx, deviceInfoIdx);
+    await updateUserCurrentDevice(userIdx, deviceInfoIdx);
+    await updateFcmToken(userIdx, data.fcmToken, data.os);
+}
 async function updateUserDeviceData(userIdx: number, os: String, version: String, osVersion: String = '') {
     let searchLastDeviceSql = "SELECT * FROM `device_info` WHERE os=? AND version=? AND os_version=? ORDER BY idx DESC";
     try {
@@ -18,7 +36,7 @@ async function updateUserDeviceData(userIdx: number, os: String, version: String
                 console.log('device info inserted | idx:', insertResult[0].insertId, '/ os:', os, '/ version:', version, '/ os_version:', osVersion);
                 return insertResult[0].insertId;
             } catch(err) {
-                console.error(err);
+                console.error(err.message);
                 throw err;
             }
         } else {
@@ -26,7 +44,7 @@ async function updateUserDeviceData(userIdx: number, os: String, version: String
             return queryResult[0].idx;
         }
     } catch(err) {
-        console.error(err);
+        console.error(err.message);
         throw err;
     }
 }
@@ -38,10 +56,10 @@ async function updateUserDeviceLog(userIdx: number, deviceInfoIdx: number) {
             // 디바이스 로그가 없는 경우 디바이스 로그 새로 저장
             let insertDeviceLogSql = "INSERT INTO `user_device_log`(`user_idx`, `device_info_idx`) VALUES (?, ?)";
             try {
-                const insertResult = await pool.query(insertDeviceLogSql, [userIdx, deviceInfoIdx]);
+                const insertResult = await pool.promise().query(insertDeviceLogSql, [userIdx, deviceInfoIdx]);
                 return insertResult[0].insertId;
             } catch(err) {
-                console.error(err);
+                console.error(err.message);
                 throw err;
             }
         } else {
@@ -54,12 +72,12 @@ async function updateUserDeviceLog(userIdx: number, deviceInfoIdx: number) {
                 }
                 return queryResults[0].idx;
             } catch(err) {
-                console.error(err);
+                console.error(err.message);
                 throw err;
             }
         }
     } catch(err) {
-        console.error(err);
+        console.error(err.message);
         throw err;
     }
 }
@@ -75,7 +93,7 @@ async function updateUserCurrentDevice(userIdx: number, deviceInfoIdx: number) {
                 console.log('user_current_device inserted | idx:', insertResult[0].insertId);
                 return insertResult[0].insertId;
             } catch(err) {
-                console.error(err);
+                console.error(err.message);
                 throw err;
             }
         } else {
@@ -89,13 +107,13 @@ async function updateUserCurrentDevice(userIdx: number, deviceInfoIdx: number) {
                     }
                     return queryResults[0].idx;
                 } catch(err) {
-                    console.error(err);
+                    console.error(err.message);
                     throw err;
                 }
             }
         }
     } catch(err) {
-        console.error(err);
+        console.error(err.message);
         throw(err);
     }
 }
@@ -111,7 +129,7 @@ async function updateFcmToken(userIdx: number, fcmToken: String, os: String) {
                 console.log('fcm_token inserted | idx:', insertResult[0].insertId);
                 return insertResult[0].insertId;
             } catch(err) {
-                console.error(err);
+                console.error(err.message);
                 throw err;
             }
         } else {
@@ -125,27 +143,41 @@ async function updateFcmToken(userIdx: number, fcmToken: String, os: String) {
                     }
                     return queryResults[0].idx;
                 } catch(err) {
-                    console.error(err);
+                    console.error(err.message);
                     throw err;
                 }
             }
         }
     } catch(err) {
-        console.error(err);
+        console.error(err.message);
         throw(err);
     }
 }
 accountRouter.post('/signup', async (req: Request, res: Response) => {
     let data:any = req.body;
-    let createUserSql = "INSERT INTO `users`(`email`, `password`, `fcm_token`, `signup_from`, `firebase_uid`) VALUES (?, ?, ?, ?, ?)";
-    let result: OkPacket;
-    try {
-        result = await pool.promise().query(createUserSql, [data.email, Md5.hashStr(data.password), data.fcm_token, data.signup_from, data.firebase_uid]);
-        console.log(result);
-        res.sendStatus(200);
-    } catch(err) {
-        console.error(err);
-        res.sendStatus(400);
+
+    const userExists = await checkUserExists(data.email);
+    if(userExists) {
+        console.error('user already exists');
+        res.sendStatus(401);
+    } else {
+        let createUserSql = "INSERT INTO `users`(`email`, `password`, `signup_from`, `firebase_uid`) VALUES (?, ?, ?, ?)";
+
+        try {
+            const [insertResult] = await pool.promise().query(createUserSql, [
+                data.email,
+                Md5.hashStr(data.password),
+                data.os,
+                data.firebaseUid]
+            );
+            const userIdx: number = insertResult.insertId;
+            await updateUserDeviceDataFlow(userIdx, data);
+
+            res.sendStatus(200);
+        } catch(err) {
+            console.error(err.message);
+            res.sendStatus(400);
+        }
     }
 });
 accountRouter.post('/login', async (req: Request, res: Response) => {
@@ -156,15 +188,12 @@ accountRouter.post('/login', async (req: Request, res: Response) => {
         const [result] = await pool.promise().query(loginUserSql, [data.email, Md5.hashStr(data.password)]);
         if (result[0]) {
             try {
-                const deviceInfoIdx: number = await updateUserDeviceData(result[0].idx, data.os, data.version, data.osVersion);
-                await updateUserDeviceLog(result[0].idx, deviceInfoIdx);
-                await updateUserCurrentDevice(result[0].idx, deviceInfoIdx);
-                await updateFcmToken(result[0].idx, data.fcmToken, data.os);
+                const userIdx: number = result[0].idx;
+                await updateUserDeviceDataFlow(userIdx, data);
 
                 res.sendStatus(200);
             } catch (err) {
-                console.error(err);
-                throw err;
+                console.error(err.message);
                 res.sendStatus(401);
             }
         } else {
@@ -173,7 +202,6 @@ accountRouter.post('/login', async (req: Request, res: Response) => {
         }
     } catch (err) {
         console.error(err.message);
-        throw err;
         res.sendStatus(400);
     }
 });
