@@ -185,7 +185,24 @@ async function updateFcmToken(userIdx: number, fcmToken: String, os: String) {
     }
 }
 
+export async function findUserIdxFromUid(uid:string) {
+    let searchUserIdxSql = "SELECT * FROM users WHERE firebase_uid=?";
+    try {
+        const [queryResult] = await pool.promise().query(searchUserIdxSql, [uid]);
+        if(!queryResult[0]) {
+            console.error('no user found');
+            return -1;
+        } else {
+            return queryResult[0].idx;
+        }
+    } catch(err) {
+        console.error(err);
+        return -1;
+    }
+}
+
 export default {
     checkUserExists,
-    updateUserDeviceDataFlow
+    updateUserDeviceDataFlow,
+    findUserIdxFromUid
 }

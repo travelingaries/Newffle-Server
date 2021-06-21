@@ -1,10 +1,14 @@
 import cookieParser from 'cookie-parser';
 import path from 'path';
-import express, {Request, RequestHandler, Response} from 'express';
+import express, {NextFunction, Request, RequestHandler, Response} from 'express';
 
 // logger
 import Logger from 'jet-logger';
 const logger = new Logger();
+
+// firebase
+var FCM = require('fcm-node');
+const SERVER_KEY = 'AAAAG7TqHXM:APA91bEyD_KJRVuPdaaT5UBjWf9rn28PZkdpzuOUAQtw6w1KPTFbp59DTCMxqMMdKEnYw_rtxTlRI5MKeMEIOC45HQbYjP65hY7Hzb4txUeD9qms35cvhuGGnIoi0IqpaySU9DC0xyxo';
 
 const app: express.Express = express();
 app.use(express.json() as RequestHandler);
@@ -36,6 +40,33 @@ import routes from './routes';
 app.use(routes);
 app.get('/', (req: Request, res: Response) => {
     res.sendStatus(200);
+});
+app.post('/fcm', async(req: Request, res: Response, next: NextFunction) => {
+    let data:any = req.body;
+    try {
+        let fcm = new FCM(SERVER_KEY);
+        let message = {
+            to: '/topic/' + data.topic,
+            notification: {
+                title: data.title,
+                body: data.body,
+                sound: 'default',
+                //"click_action": "FCM_PLUGIN_ACTIVITY",
+                //"icon": "fcm_push_icon"
+
+            }
+        }
+        res.json(message);
+        /*fcm.send(message, (err: any, response: any) => {
+           if(err) {
+               next(err);
+           } else {
+               res.json(response);
+           }
+        });*/
+    } catch (error) {
+        next(error);
+    }
 });
 
 // Start the server

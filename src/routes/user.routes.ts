@@ -1,6 +1,7 @@
 import {Request, Response, Router} from 'express';
 import {RowDataPacket} from "mysql";
 import {findCategoryIdx} from "../libraries/news_library";
+import {findUserIdxFromUid} from "../libraries/user_library";
 
 const { pool } = require('../helpers/database');
 
@@ -14,11 +15,12 @@ userRouter.post('/categories', async (req: Request, res: Response) => {
     let newlySelected = selectedCategories.filter(category => !initialSelectedCategories.includes(category));
     let unselected = initialSelectedCategories.filter(category => !selectedCategories.includes(category));
 
+    const userIdx = await findUserIdxFromUid(data.uid);
     for(const category of newlySelected) {
         const categoryIdx = await findCategoryIdx(category);
         let insertCategorySql = "INSERT INTO user_category_subscriptions(user_idx, category_idx, status, notification_option) VALUES(?, ?, ?, ?)";
         try {
-            const [insertResult] = await pool.promise().query(insertCategorySql, [data.userIdx, categoryIdx, 1, 1]);
+            const [insertResult] = await pool.promise().query(insertCategorySql, [userIdx, categoryIdx, 1, 1]);
         } catch(err) {
             console.error(err.message);
             res.sendStatus(400);
@@ -28,7 +30,7 @@ userRouter.post('/categories', async (req: Request, res: Response) => {
         const categoryIdx = await findCategoryIdx(category);
         let deleteCategorySql = "DELETE FROM `user_category_subscriptions` WHERE `user_idx`=? AND `category_idx`=?";
         try {
-            const [deleteResult] = await pool.promise().query(deleteCategorySql, [data.userIdx, categoryIdx]);
+            const [deleteResult] = await pool.promise().query(deleteCategorySql, [userIdx, categoryIdx]);
         } catch(err) {
             console.error(err.message);
             res.sendStatus(400);
