@@ -3,7 +3,7 @@ const { pool } = require('../helpers/database');
 /**
  * 해당 이메일로 기존에 생성된 계정이 있는지 확인
  */
-export async function checkUserExists(email: String) {
+export async function checkUserExists(email: string) {
     let checkUserExistsSql = "SELECT * FROM `users` WHERE email=?";
     let userExists = false;
     try {
@@ -201,8 +201,85 @@ export async function findUserIdxFromUid(uid:string) {
     }
 }
 
+/**
+ * 유저 푸시 전체를 받을지 말지 설정을 조회
+ * @param userIdx number
+ * @return number
+ */
+export async function getUserPushOnOff(userIdx:number):Promise<number> {
+    let searchUserPushOnSql = "SELECT * FROM `users` WHERE `idx`=?";
+    try {
+        const [queryResult] = await pool.promise().query(searchUserPushOnSql, [userIdx]);
+        if(!queryResult[0]) {
+            console.error('no user found');
+            return -1;
+        } else {
+            return queryResult[0].push_on;
+        }
+    } catch(err) {
+        console.error(err.message);
+        throw err;
+    }
+}
+
+/**
+ * 유저가 푸시 전체를 받을지 말지 설정을 저장
+ * @param userIdx
+ */
+export async function setUserPushOnOff(userIdx:number, pushOn:number) {
+    let updateUserPushOnSql = "UPDATE `users` SET `push_on`=? WHERE `idx`=?";
+    try {
+        const updateResult = await pool.promise().query(updateUserPushOnSql, [pushOn, userIdx]);
+        if(updateResult[0].affectedRows > 0) {
+            return true;
+        }
+    } catch(err) {
+        console.error(err.message);
+        throw err;
+    }
+}
+
+/**
+ * 유저의 카테고리별  전체를 받을지 말지 설정을 조회
+ * @param userIdx number
+ * @return number
+ */
+export async function getUserCategoryNotificationOptions(userIdx:number) {
+    let searchUserCategoryNotificationOptions = "SELECT `category`, `notification_option` FROM `user_category_subscriptions` JOIN `news_categories` ON `news_categories`.`idx`=`user_category_subscriptions`.`category_idx` WHERE `user_idx`=?";
+    try {
+        const [queryResults] = await pool.promise().query(searchUserCategoryNotificationOptions, [userIdx]);
+        return queryResults;
+    } catch(err) {
+        console.error(err.message);
+        throw err;
+    }
+}
+
+/**
+ * 유저가 각 카테고리별로 푸시 알림을 받을지 말지 설정을 저장
+ * @param userIdx
+ * @param categoryIdx
+ * @param notificationOn
+ */
+export async function setUserCategoryNotificationOption(userIdx:number, categoryIdx:number, notificationOption:number) {
+    let updateCategoryNotificationSql = "UPDATE `user_category_subscription` SET `notification_option`=? WHERE `user_idx`=? AND `category_idx`=?";
+    try {
+        const updateResult = await pool.promise().query(updateCategoryNotificationSql, [notificationOption, userIdx, categoryIdx]);
+        if(updateResult[0].affectedRows > 0) {
+            return true;
+        }
+    } catch(err) {
+        console.error(err.message);
+        throw err;
+    }
+}
+
 export default {
     checkUserExists,
     updateUserDeviceDataFlow,
-    findUserIdxFromUid
+    findUserIdxFromUid,
+    getUserPushOnOff,
+    setUserPushOnOff,
+    getUserCategoryNotificationOptions,
+    setUserCategoryNotificationOption
 }

@@ -1,12 +1,34 @@
 import {Request, Response, Router} from 'express';
 import {RowDataPacket} from "mysql";
 import {findCategoryIdx} from "../libraries/news_library";
-import {findUserIdxFromUid} from "../libraries/user_library";
+import {findUserIdxFromUid, getUserCategoryNotificationOptions, getUserPushOnOff} from "../libraries/user_library";
 
 const { pool } = require('../helpers/database');
 
 const userRouter = Router();
 
+/**
+ * 유저의 관심분야들을 불러오기
+ */
+userRouter.get('/categories/:uid', async (req: Request, res: Response) => {
+    let uid:string = req.params.uid;
+    let categorySql = "SELECT * FROM `user_category_subscriptions` JOIN `users` ON users.idx=user_category_subscriptions.user_idx JOIN `news_categories` ON news_categories.idx=user_category_subscriptions.category_idx WHERE users.firebase_uid=?";
+
+    try {
+        const [queryResults] = await pool.promise().query(categorySql, [uid]);
+        let userCategories: String[] = [];
+        queryResults.forEach((result:RowDataPacket) => {
+            userCategories.push(result.category);
+        });
+        res.json(userCategories);
+    } catch(err) {
+        console.error(err.message);
+        res.sendStatus(400);
+    }
+});
+/**
+ * 유저의 관심분야들을 새로 업데이트하기
+ */
 userRouter.post('/categories', async (req: Request, res: Response) => {
     let data:any = req.body;
     let selectedCategories:string[] = data.selectedCategories;
@@ -38,37 +60,20 @@ userRouter.post('/categories', async (req: Request, res: Response) => {
     }
     res.sendStatus(200);
 });
-userRouter.get('/find_user_idx/:uid', async (req: Request, res: Response) => {
-    let uidSql = "SELECT * FROM users WHERE firebase_uid=?";
+/**
+ * 유저의 푸시 알림 설정들을 조회하기
+ */
+userRouter.get('/notification_options/:uid', async (req:Request, res:Response) => {
+    const uid:string = req.params.uid;
+    const userIdx = await findUserIdxFromUid(uid);
 
-    try {
-        const [queryResult] = await pool.promise().query(uidSql, [req.params.uid]);
-        if(!queryResult[0]) {
-            console.error('no user found');
-            res.sendStatus(404);
-        } else {
-            res.json(queryResult[0].idx);
-        }
-    } catch(err) {
-        console.error(err);
-        res.sendStatus(400);
+    const userPushOn = await getUserPushOnOff(userIdx);
+    const userCategoryNotificationOptions = await getUserCategoryNotificationOptions(userIdx)
+    const userNotificationOptions = {
+        'push_on' : userPushOn,
+        'category_notifications' : userCategoryNotificationOptions
     }
-});
-userRouter.get('/categories/:uid', async (req: Request, res: Response) => {
-    let uid:String = req.params.uid;
-    let categorySql = "SELECT * FROM `user_category_subscriptions` JOIN `users` ON users.idx=user_category_subscriptions.user_idx JOIN `news_categories` ON news_categories.idx=user_category_subscriptions.category_idx WHERE users.firebase_uid=?";
-
-    try {
-        const [queryResults] = await pool.promise().query(categorySql, [uid]);
-        let userCategories: String[] = [];
-        queryResults.forEach((result:RowDataPacket) => {
-            userCategories.push(result.category);
-        });
-        res.json(userCategories);
-    } catch(err) {
-        console.error(err.message);
-        res.sendStatus(400);
-    }
+    res.json(userNotificationOptions);
 });
 
 export default userRouter;

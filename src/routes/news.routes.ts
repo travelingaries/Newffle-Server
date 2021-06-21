@@ -10,7 +10,7 @@ newsRouter.get('/categories', async (req: Request, res: Response) => {
     let categoriesSql = "SELECT * FROM `news_categories`";
     try {
         const [queryResults] = await pool.promise().query(categoriesSql);
-        let categories:String[] = [];
+        let categories:string[] = [];
         queryResults.forEach((result:RowDataPacket) => {
             if(result.category != '') {
                 categories.push(result.category);
