@@ -245,7 +245,7 @@ export async function setUserPushOnOff(userIdx:number, pushOn:number) {
  * @return number
  */
 export async function getUserCategoryNotificationOptions(userIdx:number) {
-    let searchUserCategoryNotificationOptions = "SELECT `category`, `notification_option` FROM `user_category_subscriptions` JOIN `news_categories` ON `news_categories`.`idx`=`user_category_subscriptions`.`category_idx` WHERE `user_idx`=?";
+    let searchUserCategoryNotificationOptions = "SELECT DISTINCT `category`, `notification_option` FROM `user_category_subscriptions` JOIN `news_categories` ON `news_categories`.`idx`=`user_category_subscriptions`.`category_idx` WHERE `user_idx`=?";
     try {
         const [queryResults] = await pool.promise().query(searchUserCategoryNotificationOptions, [userIdx]);
         return queryResults;

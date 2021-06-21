@@ -63,15 +63,16 @@ userRouter.post('/categories', async (req: Request, res: Response) => {
 /**
  * 유저의 푸시 알림 설정들을 조회하기
  */
-userRouter.get('/notification_options/:uid', async (req:Request, res:Response) => {
-    const uid:string = req.params.uid;
+userRouter.post('/notification_options', async (req:Request, res:Response) => {
+    const data:any = req.body;
+    const uid:string = data.uid;
     const userIdx = await findUserIdxFromUid(uid);
 
     const userPushOn = await getUserPushOnOff(userIdx);
     const userCategoryNotificationOptions = await getUserCategoryNotificationOptions(userIdx)
     const userNotificationOptions = {
-        'push_on' : userPushOn,
-        'category_notifications' : userCategoryNotificationOptions
+        'pushOn' : userPushOn,
+        'categoryNotifications' : userCategoryNotificationOptions
     }
     res.json(userNotificationOptions);
 });
