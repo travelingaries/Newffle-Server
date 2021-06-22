@@ -263,7 +263,6 @@ export async function getUserCategoryNotificationOptions(userIdx:number) {
  */
 export async function setUserCategoryNotificationOption(userIdx:number, categoryIdx:number, notificationOption:number) {
     let updateCategoryNotificationSql = "UPDATE `user_category_subscriptions` SET `notification_option`=? WHERE `user_idx`=? AND `category_idx`=?";
-    console.log('start update | notificationOption :', notificationOption, '/ userIdx :', userIdx, '/ categoryIdx :', categoryIdx);
     try {
         const updateResult = await pool.promise().query(updateCategoryNotificationSql, [notificationOption, userIdx, categoryIdx]);
         if(updateResult[0].affectedRows > 0) {
