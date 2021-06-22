@@ -1,7 +1,12 @@
 import {Request, Response, Router} from 'express';
 import {RowDataPacket} from "mysql";
 import {findCategoryIdx} from "../libraries/news_library";
-import {findUserIdxFromUid, getUserCategoryNotificationOptions, getUserPushOnOff} from "../libraries/user_library";
+import {
+    findUserIdxFromUid,
+    getUserCategoryNotificationOptions,
+    getUserPushOnOff, setUserCategoryNotificationOption,
+    setUserPushOnOff
+} from "../libraries/user_library";
 
 const { pool } = require('../helpers/database');
 
@@ -63,10 +68,10 @@ userRouter.post('/categories', async (req: Request, res: Response) => {
 /**
  * 유저의 푸시 알림 설정들을 조회하기
  */
-userRouter.post('/notification_options', async (req:Request, res:Response) => {
+userRouter.post('/notifications', async (req:Request, res:Response) => {
     const data:any = req.body;
     const uid:string = data.uid;
-    const userIdx = await findUserIdxFromUid(uid);
+    const userIdx:number = await findUserIdxFromUid(uid);
 
     const userPushOn = await getUserPushOnOff(userIdx);
     const userCategoryNotificationOptions = await getUserCategoryNotificationOptions(userIdx)
@@ -75,6 +80,31 @@ userRouter.post('/notification_options', async (req:Request, res:Response) => {
         'categoryNotifications' : userCategoryNotificationOptions
     }
     res.json(userNotificationOptions);
+});
+/**
+ * 유저의 푸시 알림 설정들을 업데이트하기
+ */
+userRouter.post('/notifications/update', async(req:Request, res:Response) => {
+    const data:any = req.body;
+    const uid:string = data.uid;
+    const userIdx:number = await findUserIdxFromUid(uid);
+
+    try {
+        await setUserPushOnOff(userIdx, data.pushOn);
+
+        const userCategoryNotificationOptions = await getUserCategoryNotificationOptions(userIdx);
+        for(let i:number = 0; i < data.categoryNotifications.length; i++) {
+            const notificationSetting = data.categoryNotifications[i];
+            if(userCategoryNotificationOptions[i]['notification_option'] != notificationSetting.notificationOption) {
+                const categoryIdx:number = await findCategoryIdx(notificationSetting.category);
+                await setUserCategoryNotificationOption(userIdx, categoryIdx, notificationSetting.notificationOption);
+            }
+        }
+        res.sendStatus(200);
+    } catch(err) {
+        console.error(err.message);
+        res.sendStatus(400);
+    }
 });
 
 export default userRouter;
