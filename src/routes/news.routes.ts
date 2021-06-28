@@ -30,9 +30,26 @@ newsRouter.post('/news_in_category', async (req: Request, res: Response) => {
     if(data.limit != null) {
         limit = data.limit;
     }
-    let newsInCategoriesSql = "SELECT * FROM `news` JOIN `news_categories_map` ON news_categories_map.news_idx = news.idx WHERE news_categories_map.category_idx=? ORDER BY news.idx DESC LIMIT ?";
+    let newsInCategoriesSql = "SELECT *, TIMESTAMPDIFF(MINUTE, news.created_time, CURRENT_TIMESTAMP) as diff_minutes FROM `news` JOIN `news_categories_map` ON news_categories_map.news_idx = news.idx WHERE news_categories_map.category_idx=? ORDER BY news.idx DESC LIMIT ?";
     try {
         const [queryResults] = await pool.promise().query(newsInCategoriesSql, [categoryIdx, limit]);
+        for(let i:number = 0; i < queryResults.length; i++) {
+            let diffMinutes:number = queryResults[i].diff_minutes;
+            let diffHours:number = 0;
+            let diffDays:number = 0;
+            if(diffMinutes >= 60) {
+                diffHours = Math.floor(diffMinutes / 60);
+                diffMinutes %= 60;
+                queryResults[i].diffHours = diffHours;
+                queryResults[i].diffMinutes = diffMinutes;
+            }
+            if(diffHours >= 24) {
+                diffDays = Math.floor(diffHours / 24);
+                diffHours %= 24;
+                queryResults[i].diffDays = diffDays;
+                queryResults[i].diffHours = diffHours;
+            }
+        }
         res.json(queryResults);
     } catch(err) {
         console.error(err);
