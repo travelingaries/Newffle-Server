@@ -25,9 +25,14 @@ newsRouter.get('/categories', async (req: Request, res: Response) => {
 newsRouter.post('/news_in_category', async (req: Request, res: Response) => {
     let data:any = req.body;
     const categoryIdx:number = await findCategoryIdx(data.category);
-    let newsInCategoriesSql = "SELECT * FROM `news` JOIN `news_categories_map` ON news_categories_map.news_idx = news.idx WHERE news_categories_map.category_idx=? ORDER BY news.idx DESC LIMIT 20";
+
+    let limit:number = 20;
+    if(data.limit != null) {
+        limit = data.limit;
+    }
+    let newsInCategoriesSql = "SELECT * FROM `news` JOIN `news_categories_map` ON news_categories_map.news_idx = news.idx WHERE news_categories_map.category_idx=? ORDER BY news.idx DESC LIMIT ?";
     try {
-        const [queryResults] = await pool.promise().query(newsInCategoriesSql, [categoryIdx]);
+        const [queryResults] = await pool.promise().query(newsInCategoriesSql, [categoryIdx, limit]);
         res.json(queryResults);
     } catch(err) {
         console.error(err);
