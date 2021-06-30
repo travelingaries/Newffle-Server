@@ -36,11 +36,8 @@ userRouter.get('/categories/:uid', async (req: Request, res: Response) => {
  */
 userRouter.post('/categories', async (req: Request, res: Response) => {
     let data:any = req.body;
-    let selectedCategories:string[] = data.selectedCategories;
-    let initialSelectedCategories:string[] = data.initialSelectedCategories;
-
-    let newlySelected = selectedCategories.filter(category => !initialSelectedCategories.includes(category));
-    let unselected = initialSelectedCategories.filter(category => !selectedCategories.includes(category));
+    let newlySelected:string[] = data.newlySelected;
+    let unselected:string[] = data.unselected;
 
     const userIdx = await findUserIdxFromUid(data.uid);
     for(const category of newlySelected) {
