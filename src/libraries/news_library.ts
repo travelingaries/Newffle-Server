@@ -1,3 +1,5 @@
+import {RowDataPacket} from "mysql";
+
 const { pool } = require('../helpers/database');
 
 export async function findCategoryIdx(category: String): Promise<number> {
@@ -39,10 +41,37 @@ export async function updateCategories(category:string) {
     }
 }
 
+// 카테고리들 불러오기
+export async function getCategories(onlyVisible:boolean = true) {
+    let categoriesSql:string = "SELECT * FROM `news_categories`";
+    if(onlyVisible) {
+        categoriesSql += " WHERE `status`=1";
+    }
+    try {
+        const [queryResults] = await pool.promise().query(categoriesSql);
+        let categories:string[] = [];
+        let topics:string[] = [];
+        queryResults.forEach((result:RowDataPacket) => {
+            if(result.category && result.category != '') {
+                categories.push(result.category);
+            }
+            if(result.fcm_topic && result.fcm_topic != '') {
+                topics.push(result.fcm_topic);
+            }
+        })
+        return {
+          'categories': categories,
+          'topics': topics
+        };
+    } catch(err) {
+        console.error(err.message);
+        throw err;
+    }
+}
+
 // 뉴스와 분야 map db에 저장
 export async function saveNewsCategoriesMap(categoryIdx:number, newsIdx:number) {
     let mapSql:string = "INSERT INTO `news_categories_map`(`category_idx`, `news_idx`) VALUES (?, ?)";
-
     try {
         const [insertResult] = await pool.promise().query(mapSql, [categoryIdx, newsIdx]);
     } catch(err) {
@@ -54,5 +83,6 @@ export async function saveNewsCategoriesMap(categoryIdx:number, newsIdx:number) 
 export default {
     findCategoryIdx,
     updateCategories,
+    getCategories,
     saveNewsCategoriesMap
 }

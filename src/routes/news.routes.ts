@@ -1,26 +1,14 @@
 import {Request, Response, Router} from 'express';
 import {RowDataPacket} from "mysql";
-import {findCategoryIdx} from "../libraries/news_library";
+import {findCategoryIdx, getCategories} from "../libraries/news_library";
 
 const { pool } = require('../helpers/database');
 
 const newsRouter = Router();
 
 newsRouter.get('/categories', async (req: Request, res: Response) => {
-    let categoriesSql = "SELECT * FROM `news_categories`";
-    try {
-        const [queryResults] = await pool.promise().query(categoriesSql);
-        let categories:string[] = [];
-        queryResults.forEach((result:RowDataPacket) => {
-            if(result.category != '') {
-                categories.push(result.category);
-            }
-        })
-        res.json(categories);
-    } catch(err) {
-        console.error(err.message);
-        res.sendStatus(400);
-    }
+    const categoryData = await getCategories();
+    return categoryData.categories;
 });
 newsRouter.post('/news_in_category', async (req: Request, res: Response) => {
     let data:any = req.body;

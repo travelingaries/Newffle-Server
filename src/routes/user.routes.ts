@@ -1,6 +1,6 @@
 import {Request, Response, Router} from 'express';
 import {RowDataPacket} from "mysql";
-import {findCategoryIdx} from "../libraries/news_library";
+import {findCategoryIdx, getCategories} from "../libraries/news_library";
 import {
     findUserIdxFromUid,
     getUserCategoryNotificationOptions,
@@ -17,15 +17,22 @@ const userRouter = Router();
  */
 userRouter.get('/categories/:uid', async (req: Request, res: Response) => {
     let uid:string = req.params.uid;
-    let categorySql = "SELECT * FROM `user_category_subscriptions` JOIN `users` ON users.idx=user_category_subscriptions.user_idx JOIN `news_categories` ON news_categories.idx=user_category_subscriptions.category_idx WHERE users.firebase_uid=?";
 
+    const categoryData = await getCategories();
+    const categories:string[] = categoryData.categories;
+    const topics:string[] = categoryData.topics;
+    let userCategories:string[] = [];
+
+    let userCategorySql = "SELECT * FROM `user_category_subscriptions` JOIN `users` ON users.idx=user_category_subscriptions.user_idx JOIN `news_categories` ON news_categories.idx=user_category_subscriptions.category_idx WHERE users.firebase_uid=?";
     try {
-        const [queryResults] = await pool.promise().query(categorySql, [uid]);
-        let userCategories: String[] = [];
+        const [queryResults] = await pool.promise().query(userCategorySql, [uid]);
         queryResults.forEach((result:RowDataPacket) => {
             userCategories.push(result.category);
         });
-        res.json(userCategories);
+        res.json({
+            categories: categories,
+            topics: topics,
+            userCategories: userCategories});
     } catch(err) {
         console.error(err.message);
         res.sendStatus(400);

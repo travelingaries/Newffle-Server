@@ -1,25 +1,14 @@
 import {Request, Response, Router} from 'express';
 import {RowDataPacket} from "mysql";
-import {saveNewsCategoriesMap, updateCategories} from "../libraries/news_library";
+import {getCategories, saveNewsCategoriesMap, updateCategories} from "../libraries/news_library";
 
 const { pool } = require('../helpers/database');
 
 const adminRouter = Router();
 
 adminRouter.get('/add_news', async (req: Request, res: Response) => {
-    let categorySql:string = "SELECT * FROM `news_categories` ORDER BY `idx` ASC";
-    let categories:string[] = [];
-
-    try {
-        const [queryResults] = await pool.promise().query(categorySql);
-        queryResults.forEach((result:RowDataPacket) => {
-            categories.push(result.category);
-        });
-        res.render('add_news', {categories: categories});
-    } catch(err) {
-        console.error(err.message);
-        res.sendStatus(400);
-    }
+    const categoryData = await getCategories();
+    res.render('add_news', {categories: categoryData.categories});
 });
 adminRouter.post('/add_news', async (req: Request, res: Response) => {
     // 뉴스 데이터 db에 저장
