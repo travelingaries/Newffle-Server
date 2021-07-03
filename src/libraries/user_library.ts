@@ -1,3 +1,5 @@
+import {RowDataPacket} from "mysql";
+
 const { pool } = require('../helpers/database');
 
 /**

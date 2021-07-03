@@ -38,41 +38,48 @@ userRouter.get('/categories/:uid', async (req: Request, res: Response) => {
         res.sendStatus(400);
     }
 });
-/**
- * 유저의 관심분야들을 새로 업데이트하기
- */
-userRouter.post('/categories', async (req: Request, res: Response) => {
-    let data:any = req.body;
-    let newlySelected:string[] = data.newlySelected;
-    let unselected:string[] = data.unselected;
 
+/**
+ * 관심분야 구독
+ */
+userRouter.post('/categories/subscribe', async(req: Request, res: Response) => {
+    let data:any = req.body;
+    const category:string = data.category;
     const userIdx = await findUserIdxFromUid(data.uid);
-    for(const category of newlySelected) {
-        const categoryIdx = await findCategoryIdx(category);
-        let insertCategorySql = "INSERT INTO user_category_subscriptions(user_idx, category_idx, status, notification_option) VALUES(?, ?, ?, ?)";
-        try {
-            const [insertResult] = await pool.promise().query(insertCategorySql, [userIdx, categoryIdx, 1, 1]);
-        } catch(err) {
-            console.error(err.message);
-            res.sendStatus(400);
-        }
-    }
-    for(const category of unselected) {
-        const categoryIdx = await findCategoryIdx(category);
-        let deleteCategorySql = "DELETE FROM `user_category_subscriptions` WHERE `user_idx`=? AND `category_idx`=?";
-        try {
-            const [deleteResult] = await pool.promise().query(deleteCategorySql, [userIdx, categoryIdx]);
-        } catch(err) {
-            console.error(err.message);
-            res.sendStatus(400);
-        }
+
+    const categoryIdx = await findCategoryIdx(category);
+    let insertCategorySql = "INSERT INTO user_category_subscriptions(user_idx, category_idx, status, notification_option) VALUES(?, ?, ?, ?)";
+    try {
+        const [insertResult] = await pool.promise().query(insertCategorySql, [userIdx, categoryIdx, 1, 1]);
+    } catch(err) {
+        console.error(err.message);
+        res.sendStatus(400);
     }
     res.sendStatus(200);
 });
 /**
+ * 관심분야 구독 취소
+ */
+userRouter.post('/categories/unsubscribe', async(req: Request, res: Response) => {
+        let data:any = req.body;
+    const category:string = data.category;
+    const userIdx = await findUserIdxFromUid(data.uid);
+
+    const categoryIdx = await findCategoryIdx(category);
+    let deleteCategorySql = "DELETE FROM `user_category_subscriptions` WHERE `user_idx`=? AND `category_idx`=?";
+    try {
+        const [deleteResult] = await pool.promise().query(deleteCategorySql, [userIdx, categoryIdx]);
+    } catch(err) {
+        console.error(err.message);
+        res.sendStatus(400);
+    }
+    res.sendStatus(200);
+});
+
+/**
  * 유저의 푸시 알림 설정들을 조회하기
  */
-userRouter.post('/notifications', async (req:Request, res:Response) => {
+userRouter.post('/categories/notifications', async (req:Request, res:Response) => {
     const data:any = req.body;
     const uid:string = data.uid;
     const userIdx:number = await findUserIdxFromUid(uid);
@@ -81,34 +88,34 @@ userRouter.post('/notifications', async (req:Request, res:Response) => {
     const userCategoryNotificationOptions = await getUserCategoryNotificationOptions(userIdx)
     const userNotificationOptions = {
         'pushOn' : userPushOn,
-        'categoryNotifications' : userCategoryNotificationOptions
+        'categories': userCategoryNotificationOptions.categories,
+        'topics': userCategoryNotificationOptions.topics,
+        'categoryNotifications' : userCategoryNotificationOptions.categoryNotifications
     }
     res.json(userNotificationOptions);
 });
 /**
- * 유저의 푸시 알림 설정들을 업데이트하기
+ * 유저의 푸시 알림 전체 설정 업데이트하기
  */
-userRouter.post('/notifications/update', async(req:Request, res:Response) => {
+userRouter.post('/categories/notifications/push_on', async(req:Request, res:Response) => {
     const data:any = req.body;
     const uid:string = data.uid;
     const userIdx:number = await findUserIdxFromUid(uid);
-
-    try {
-        await setUserPushOnOff(userIdx, data.pushOn);
-
-        const userCategoryNotificationOptions = await getUserCategoryNotificationOptions(userIdx);
-        for(let i:number = 0; i < data.categoryNotifications.length; i++) {
-            const notificationSetting = data.categoryNotifications[i];
-            if(userCategoryNotificationOptions[i]['notification_option'] != notificationSetting.notificationOption) {
-                const categoryIdx:number = await findCategoryIdx(notificationSetting.category);
-                await setUserCategoryNotificationOption(userIdx, categoryIdx, notificationSetting.notificationOption);
-            }
-        }
-        res.sendStatus(200);
-    } catch(err) {
-        console.error(err.message);
-        res.sendStatus(400);
-    }
+    await setUserPushOnOff(userIdx, data.pushOn);
+    res.sendStatus(200);
+});
+/**
+ * 유저의 카테고리별 푸시 알림 설정 업데이트하기
+ */
+userRouter.post('/categories/notifications/category', async(req:Request, res:Response) => {
+    const data:any = req.body;
+    const uid:string = data.uid;
+    const userIdx:number = await findUserIdxFromUid(uid);
+    const category:string = data.category;
+    const categoryIdx:number = await findCategoryIdx(category);
+    const categoryNotification:number = data.categoryNotification;
+    await setUserCategoryNotificationOption(userIdx, categoryIdx, categoryNotification)
+    res.sendStatus(200);
 });
 
 export default userRouter;
