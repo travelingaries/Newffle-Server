@@ -247,10 +247,28 @@ export async function setUserPushOnOff(userIdx:number, pushOn:number) {
  * @return number
  */
 export async function getUserCategoryNotificationOptions(userIdx:number) {
-    let searchUserCategoryNotificationOptions = "SELECT DISTINCT `category`, `notification_option` FROM `user_category_subscriptions` JOIN `news_categories` ON `news_categories`.`idx`=`user_category_subscriptions`.`category_idx` WHERE `user_idx`=?";
+    let searchUserCategoryNotificationOptions = "SELECT DISTINCT `category`, `fcm_topic`, `notification_option` FROM `user_category_subscriptions` JOIN `news_categories` ON `news_categories`.`idx`=`user_category_subscriptions`.`category_idx` WHERE `user_idx`=?";
     try {
         const [queryResults] = await pool.promise().query(searchUserCategoryNotificationOptions, [userIdx]);
-        return queryResults;
+        let categories:string[] = [];
+        let topics:string[] = [];
+        let categoryNotifications:number[] = [];
+        queryResults.forEach((result:RowDataPacket) => {
+            if(result.category != null && result.category != '') {
+                categories.push(result.category);
+            }
+            if(result.fcm_topic != null && result.fcm_topic != '') {
+                topics.push(result.fcm_topic);
+            }
+            if(result.notification_option != null) {
+                categoryNotifications.push(result.notification_option);
+            }
+        })
+        return {
+            'categories': categories,
+            'topics': topics,
+            'categoryNotifications': categoryNotifications,
+        };
     } catch(err) {
         console.error(err.message);
         throw err;
