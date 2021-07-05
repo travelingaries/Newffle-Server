@@ -9,7 +9,7 @@ generalRouter.get('/meta/:screen', async(req:Request, res:Response) => {
     // 메인화면 메타
     if(screen == 'main') {
         // 현재 영업시간인지 확인
-        const date:Date = new Date();
+        const date:Date = new Date(new Date().toLocaleString("ko-KR", {timeZone: "Asia/Seoul"}));
         let worktime:boolean = true;
         if(date.getDay() % 6 === 0) {
             worktime = false;
