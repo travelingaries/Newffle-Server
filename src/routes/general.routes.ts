@@ -5,7 +5,6 @@ const { pool } = require('../helpers/database');
 const generalRouter = Router();
 
 generalRouter.get('/meta/:screen', async(req:Request, res:Response) => {
-    const data:any = req.body;
     const screen:string = req.params.screen;
     // 메인화면 메타
     if(screen == 'main') {
@@ -44,7 +43,7 @@ generalRouter.get('/meta/:screen', async(req:Request, res:Response) => {
                 if(result.route != null && result.route != '') {
                     menuRoutes.push(result.route);
                 }
-            })
+            });
             res.json({
                 'worktime': worktime,
                 'menuNames': menuNames,
