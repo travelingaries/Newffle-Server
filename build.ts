@@ -4,7 +4,6 @@
 
 import fs from 'fs-extra';
 import Logger from 'jet-logger';
-import childProcess from 'child_process';
 
 // Setup logger
 const logger = new Logger();
@@ -17,6 +16,7 @@ logger.timestamp = false;
         // Copy front-end files
         await copy('./src/public', './dist/src/public');
         await copy('./src/views', './dist/src/views');
+        await copy('./src/config/firebase.json', './dist/src/config/firebase.json');
     } catch (err) {
         logger.err(err);
     }
