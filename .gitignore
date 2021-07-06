@@ -3,6 +3,3 @@ node_modules/
 package-lock.json
 dist/
 src/config
-
-# to include
-!src/config/newffle-firebase-adminsdk.json

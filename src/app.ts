@@ -2,6 +2,13 @@ import cookieParser from 'cookie-parser';
 import path from 'path';
 import express, {NextFunction, Request, RequestHandler, Response} from 'express';
 
+// firebase
+import * as admin from 'firebase-admin';
+let serviceAccount = require('../config/newffle-firebase-adminsdk.json');
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+});
+
 // logger
 import Logger from 'jet-logger';
 const logger = new Logger();
