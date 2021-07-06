@@ -1,5 +1,5 @@
 import * as admin from 'firebase-admin';
-let serviceAccount = require('../firebase/newffle-firebase-adminsdk.json');
+let serviceAccount = require('../config/newffle-firebase-adminsdk.json');
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
 });
