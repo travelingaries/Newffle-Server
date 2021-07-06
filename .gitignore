@@ -4,5 +4,5 @@ package-lock.json
 dist/
 src/config/*
 
-!src/config/newffle-firebase-adminsdk.json
+!src/config/firebase.json
 !src/config/dbconfig.json
