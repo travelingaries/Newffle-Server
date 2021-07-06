@@ -1,6 +1,7 @@
 import {Request, Response, Router} from 'express';
 import {RowDataPacket} from "mysql";
-import {getCategories, saveNewsCategoriesMap, updateCategories} from "../libraries/news_library";
+import {findCategoryIdx, getCategories, saveNewsCategoriesMap, updateCategories} from "../libraries/news_library";
+import {sendNewsFcmPush} from "../libraries/push_library";
 
 const { pool } = require('../helpers/database');
 
@@ -20,9 +21,27 @@ adminRouter.post('/add_news', async (req: Request, res: Response) => {
         const newsIdx:number = insertNewsResult.insertId;
 
         const categories = data.categories.split(",");
+        const categoryData = await getCategories(true, categories);
+        let alreadyPushSent:boolean = false;
         for (const category of categories) {
-            const categoryIdx:number = await updateCategories(category.trim());
+            const categoryIdx:number = await findCategoryIdx(category.trim());
+            // 카테고리가 이미 존재하지 않는 경우 다음 카테고리로 스킵
+            if(categoryIdx < 0) {
+                continue;
+            }
+
+            // 뉴스 - 분야 매핑 정보 저장
             await saveNewsCategoriesMap(categoryIdx, newsIdx);
+            // 뉴스 푸시 알림 전송
+            const topic:string = categoryData.topics[categoryData.categories.indexOf(category)];
+            if(!alreadyPushSent) {
+                sendNewsFcmPush(topic, {
+                    category: category,
+                    news_title: data.title,
+                    news_url: data.url,
+                });
+                alreadyPushSent = true;
+            }
         }
         res.redirect('/admin/add_news');
     } catch(err) {

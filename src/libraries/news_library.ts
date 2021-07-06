@@ -42,10 +42,21 @@ export async function updateCategories(category:string) {
 }
 
 // 카테고리들 불러오기
-export async function getCategories(onlyVisible:boolean = true) {
-    let categoriesSql:string = "SELECT * FROM `news_categories`";
+export async function getCategories(onlyVisible:boolean = true, categories:string[] = []) {
+    let categoriesSql:string = "SELECT * FROM `news_categories` WHERE 1=1";
     if(onlyVisible) {
-        categoriesSql += " WHERE `status`=1";
+        categoriesSql += " AND `status`=1";
+    }
+    if(categories.length > 0) {
+        categoriesSql += " AND category IN (";
+        for(const category of categories) {
+            console.log('category in loop:', category);
+            categoriesSql += "'" + category + "'";
+            if(categories.indexOf(category) < categories.length - 1) {
+                categoriesSql += ", ";
+            }
+        }
+        categoriesSql += ")";
     }
     try {
         const [queryResults] = await pool.promise().query(categoriesSql);
