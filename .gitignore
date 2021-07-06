@@ -5,3 +5,4 @@ dist/
 src/config/*
 
 !src/config/newffle-firebase-adminsdk.json
+!src/config/dbconfig.json
