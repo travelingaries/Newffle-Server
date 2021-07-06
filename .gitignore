@@ -2,4 +2,6 @@ node_modules/
 .env
 package-lock.json
 dist/
-src/config
+src/config/*
+
+!src/config/newffle-firebase-adminsdk.json
