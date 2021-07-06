@@ -1,4 +1,8 @@
-const { admin } = require('../helpers/firebase');
+import * as admin from 'firebase-admin';
+let serviceAccount = require('../config/firebase.json');
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+});
 
 /**
  * 푸시 전송
