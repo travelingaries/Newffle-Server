@@ -91,6 +91,14 @@ export async function saveNewsCategoriesMap(categoryIdx:number, newsIdx:number) 
     }
 }
 
+/**
+ * 뉴스 알림을 받아야 할 사람들을 조회
+ */
+export async function getUsersToReceiveNewsNotification(categoryIdx:number) {
+    let userSql:string = "SELECT * FROM `users` JOIN `user_category_subscriptions` ON user_category_subscriptions.user_idx=users.idx AND user_category_subscriptions.category_idx=? WHERE user_category_subscriptions.notification_option=1 AND users.push_on=1";
+
+}
+
 export default {
     findCategoryIdx,
     updateCategories,
