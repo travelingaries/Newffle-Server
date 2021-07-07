@@ -21,3 +21,10 @@
     font-size: 14px;
     line-height: 1.5;
 }
+
+footer {
+    width: 400px;
+    font-family: "Nanum Gothic";
+    font-size: 14px;
+    margin: 48px auto;
+}
