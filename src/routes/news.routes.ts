@@ -40,7 +40,6 @@ newsRouter.post('/news_in_category', async (req: Request, res: Response) => {
                 queryResults[i].diffHours = diffHours;
             }
         }
-        console.log(queryResults);
         res.json(queryResults);
     } catch(err) {
         console.error(err);
