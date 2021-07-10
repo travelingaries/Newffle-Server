@@ -22,7 +22,6 @@ newsRouter.post('/news_in_category', async (req: Request, res: Response) => {
         const [queryResults] = await pool.promise().query(newsInCategoriesSql, [categoryIdx, limit]);
         for(let i:number = 0; i < queryResults.length; i++) {
             let diffMinutes:number = queryResults[i].diff_minutes;
-            diffMinutes = 20;
             let diffHours:number = 0;
             let diffDays:number = 0;
             if(diffMinutes >= 60) {

@@ -9,7 +9,7 @@ generalRouter.get('/meta/:screen', async(req:Request, res:Response) => {
     // 메인화면 메타
     if(screen == 'main') {
         // 현재 영업시간인지 확인
-        const date:Date = new Date(new Date().toLocaleString("ko-KR", {timeZone: "Asia/Seoul"}));
+        const date:Date = new Date((new Date()).toLocaleDateString("ko-KR", {timeZone: "Asia/Seoul"}));
         let worktime:boolean = true;
         if(date.getDay() % 6 === 0) {
             worktime = false;
@@ -24,7 +24,7 @@ generalRouter.get('/meta/:screen', async(req:Request, res:Response) => {
             }
         }
         if(worktime) {
-            const hour:number = date.getHours();
+            const hour:number = parseInt(((new Date()).toLocaleTimeString("ko-KR", {timeZone: "Asia/Seoul", hour: 'numeric', minute: 'numeric'})).substr(3).split(':')[0]);
             if(hour < 8 || hour === 12 || hour >= 16) {
                 worktime = false;
             }
