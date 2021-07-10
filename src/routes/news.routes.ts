@@ -1,5 +1,4 @@
 import {Request, Response, Router} from 'express';
-import {RowDataPacket} from "mysql";
 import {findCategoryIdx, getCategories} from "../libraries/news_library";
 
 const { pool } = require('../helpers/database');

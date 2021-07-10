@@ -1,6 +1,6 @@
 import cookieParser from 'cookie-parser';
 import path from 'path';
-import express, {NextFunction, Request, RequestHandler, Response} from 'express';
+import express, {Request, RequestHandler, Response} from 'express';
 
 // logger
 import Logger from 'jet-logger';
