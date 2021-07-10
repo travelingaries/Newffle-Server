@@ -23,12 +23,15 @@ newsRouter.post('/news_in_category', async (req: Request, res: Response) => {
         const [queryResults] = await pool.promise().query(newsInCategoriesSql, [categoryIdx, limit]);
         for(let i:number = 0; i < queryResults.length; i++) {
             let diffMinutes:number = queryResults[i].diff_minutes;
+            diffMinutes = 20;
             let diffHours:number = 0;
             let diffDays:number = 0;
             if(diffMinutes >= 60) {
                 diffHours = Math.floor(diffMinutes / 60);
                 diffMinutes %= 60;
                 queryResults[i].diffHours = diffHours;
+                queryResults[i].diffMinutes = diffMinutes;
+            } else {
                 queryResults[i].diffMinutes = diffMinutes;
             }
             if(diffHours >= 24) {
@@ -38,6 +41,7 @@ newsRouter.post('/news_in_category', async (req: Request, res: Response) => {
                 queryResults[i].diffHours = diffHours;
             }
         }
+        console.log(queryResults);
         res.json(queryResults);
     } catch(err) {
         console.error(err);
