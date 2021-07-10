@@ -35,7 +35,7 @@ app.use(express.static(staticDir));
 import routes from './routes';
 app.use(routes);
 app.get('/', (req: Request, res: Response) => {
-    res.sendStatus(200);
+    res.render('index');
 });
 
 // Start the server
