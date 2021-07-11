@@ -80,6 +80,47 @@ export async function getCategories(onlyVisible:boolean = true, categories:strin
     }
 }
 
+export async function getNewsByIdx(newsIdx:number) {
+    let newsSql = "SELECT *, TIMESTAMPDIFF(MINUTE, news.created_time, CURRENT_TIMESTAMP) as diff_minutes FROM `news` WHERE idx=? ORDER BY news.idx DESC LIMIT 1";
+    try {
+        const [queryResults] = await pool.promise().query(newsSql, [newsIdx]);
+        return queryResults[0];
+    } catch(err) {
+        console.error(err);
+        throw err;
+    }
+}
+
+export async function getNewsInCategory(categoryIdx:number, limit:number) {
+    let newsInCategoriesSql = "SELECT *, TIMESTAMPDIFF(MINUTE, news.created_time, CURRENT_TIMESTAMP) as diff_minutes FROM `news` JOIN `news_categories_map` ON news_categories_map.news_idx = news.idx WHERE news_categories_map.category_idx=? ORDER BY news.idx DESC LIMIT ?";
+    try {
+        const [queryResults] = await pool.promise().query(newsInCategoriesSql, [categoryIdx, limit]);
+        for(let i:number = 0; i < queryResults.length; i++) {
+            let diffMinutes: number = queryResults[i].diff_minutes;
+            let diffHours: number = 0;
+            let diffDays: number = 0;
+            if (diffMinutes >= 60) {
+                diffHours = Math.floor(diffMinutes / 60);
+                diffMinutes %= 60;
+                queryResults[i].diffHours = diffHours;
+                queryResults[i].diffMinutes = diffMinutes;
+            } else {
+                queryResults[i].diffMinutes = diffMinutes;
+            }
+            if (diffHours >= 24) {
+                diffDays = Math.floor(diffHours / 24);
+                diffHours %= 24;
+                queryResults[i].diffDays = diffDays;
+                queryResults[i].diffHours = diffHours;
+            }
+        }
+        return queryResults;
+    } catch(err) {
+        console.error(err);
+        throw err;
+    }
+}
+
 // 뉴스와 분야 map db에 저장
 export async function saveNewsCategoriesMap(categoryIdx:number, newsIdx:number) {
     let mapSql:string = "INSERT INTO `news_categories_map`(`category_idx`, `news_idx`) VALUES (?, ?)";
@@ -92,16 +133,48 @@ export async function saveNewsCategoriesMap(categoryIdx:number, newsIdx:number) 
 }
 
 /**
- * 뉴스 알림을 받아야 할 사람들을 조회
+ * 실시간 조회수 TOP 뉴스 불러오기
+ * @param limit
  */
-export async function getUsersToReceiveNewsNotification(categoryIdx:number) {
-    let userSql:string = "SELECT * FROM `users` JOIN `user_category_subscriptions` ON user_category_subscriptions.user_idx=users.idx AND user_category_subscriptions.category_idx=? WHERE user_category_subscriptions.notification_option=1 AND users.push_on=1";
-
+export async function getPopularNews(limit:number = 5) {
+    let searchPopularNewsSql = "SELECT `article_idx`, COUNT(*) as `count` FROM `user_view_logs` WHERE `article_type`='news' GROUP BY `article_idx` ORDER BY `count` DESC LIMIT ?";
+    try {
+        const [queryResults] = await pool.promise().query(searchPopularNewsSql, [limit]);
+        let newsData:RowDataPacket[] = [];
+        for(let i:number = 0; i < queryResults.length; i++) {
+            newsData.push(await getNewsByIdx(queryResults[i].article_idx));
+        }
+        for(let i:number = 0; i < newsData.length; i++) {
+            let diffMinutes: number = newsData[i].diff_minutes;
+            let diffHours: number = 0;
+            let diffDays: number = 0;
+            if (diffMinutes >= 60) {
+                diffHours = Math.floor(diffMinutes / 60);
+                diffMinutes %= 60;
+                newsData[i].diffHours = diffHours;
+                newsData[i].diffMinutes = diffMinutes;
+            } else {
+                newsData[i].diffMinutes = diffMinutes;
+            }
+            if (diffHours >= 24) {
+                diffDays = Math.floor(diffHours / 24);
+                diffHours %= 24;
+                newsData[i].diffDays = diffDays;
+                newsData[i].diffHours = diffHours;
+            }
+        }
+        return newsData;
+    } catch(err) {
+        console.error(err.message);
+        throw err;
+    }
 }
 
 export default {
     findCategoryIdx,
     updateCategories,
     getCategories,
-    saveNewsCategoriesMap
+    getNewsInCategory,
+    saveNewsCategoriesMap,
+    getPopularNews,
 }

@@ -246,10 +246,10 @@ export async function setUserPushOnOff(userIdx:number, pushOn:number) {
  * @param userIdx number
  * @return number
  */
-export async function getUserCategoryNotificationOptions(userIdx:number) {
-    let searchUserCategoryNotificationOptions = "SELECT DISTINCT `category`, `fcm_topic`, `notification_option` FROM `user_category_subscriptions` JOIN `news_categories` ON `news_categories`.`idx`=`user_category_subscriptions`.`category_idx` WHERE `user_idx`=?";
+export async function getUserSubscriptionData(userIdx:number) {
+    let searchUserSubscriptionData = "SELECT DISTINCT `category`, `fcm_topic`, `notification_option` FROM `user_category_subscriptions` JOIN `news_categories` ON `news_categories`.`idx`=`user_category_subscriptions`.`category_idx` WHERE `user_idx`=? AND `news_categories`.`status`=1";
     try {
-        const [queryResults] = await pool.promise().query(searchUserCategoryNotificationOptions, [userIdx]);
+        const [queryResults] = await pool.promise().query(searchUserSubscriptionData, [userIdx]);
         let categories:string[] = [];
         let topics:string[] = [];
         let categoryNotifications:number[] = [];
@@ -294,12 +294,30 @@ export async function setUserCategoryNotificationOption(userIdx:number, category
     }
 }
 
+/**
+ * 유저의 정기 구독 정보를 확인하는 함수
+ */
+export async function getUserCurrentPlan(userIdx:number) {
+    let searchUserCurrentPlanSql = "SELECT * FROM `user_current_plan` WHERE `status`=1 AND `user_idx`=? LIMIT 1";
+    try {
+        const [queryResult] = await pool.promise().query(searchUserCurrentPlanSql, [userIdx]);
+        if(!queryResult[0]) {
+            return -1;
+        } else {
+            return queryResult[0].plan;
+        }
+    } catch(err) {
+        console.error(err.message);
+        throw err;
+    }
+}
+
 export default {
     checkUserExists,
     updateUserDeviceDataFlow,
     findUserIdxFromUid,
     getUserPushOnOff,
     setUserPushOnOff,
-    getUserCategoryNotificationOptions,
+    getUserSubscriptionData,
     setUserCategoryNotificationOption
 }

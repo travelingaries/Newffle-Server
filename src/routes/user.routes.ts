@@ -3,7 +3,7 @@ import {RowDataPacket} from "mysql";
 import {findCategoryIdx, getCategories} from "../libraries/news_library";
 import {
     findUserIdxFromUid,
-    getUserCategoryNotificationOptions,
+    getUserSubscriptionData,
     getUserPushOnOff, setUserCategoryNotificationOption,
     setUserPushOnOff
 } from "../libraries/user_library";
@@ -16,27 +16,19 @@ const userRouter = Router();
  * 유저의 관심분야들을 불러오기
  */
 userRouter.get('/categories/:uid', async (req: Request, res: Response) => {
-    let uid:string = req.params.uid;
+    const uid:string = req.params.uid;
+    const userIdx:number = await findUserIdxFromUid(uid);
 
     const categoryData = await getCategories();
     const categories:string[] = categoryData.categories;
     const topics:string[] = categoryData.topics;
-    let userCategories:string[] = [];
 
-    let userCategorySql = "SELECT * FROM `user_category_subscriptions` JOIN `users` ON users.idx=user_category_subscriptions.user_idx JOIN `news_categories` ON news_categories.idx=user_category_subscriptions.category_idx WHERE users.firebase_uid=?";
-    try {
-        const [queryResults] = await pool.promise().query(userCategorySql, [uid]);
-        queryResults.forEach((result:RowDataPacket) => {
-            userCategories.push(result.category);
-        });
-        res.json({
-            categories: categories,
-            topics: topics,
-            userCategories: userCategories});
-    } catch(err) {
-        console.error(err.message);
-        res.sendStatus(400);
-    }
+    const userCategorySubscriptions = await getUserSubscriptionData(userIdx)
+    res.json({
+        categories: categories,
+        topics: topics,
+        userCategories: userCategorySubscriptions.categories
+    });
 });
 
 /**
@@ -85,7 +77,7 @@ userRouter.post('/categories/notifications', async (req:Request, res:Response) =
     const userIdx:number = await findUserIdxFromUid(uid);
 
     const userPushOn = await getUserPushOnOff(userIdx);
-    const userCategoryNotificationOptions = await getUserCategoryNotificationOptions(userIdx)
+    const userCategoryNotificationOptions = await getUserSubscriptionData(userIdx)
     const userNotificationOptions = {
         'pushOn' : userPushOn,
         'categories': userCategoryNotificationOptions.categories,
