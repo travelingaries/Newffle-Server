@@ -8,7 +8,7 @@ import {
     findUserIdxFromUid,
     getUserSubscriptionData,
     getUserPushOnOff, setUserCategoryNotificationOption,
-    setUserPushOnOff
+    setUserPushOnOff, insertReadLog
 } from "../libraries/user_library";
 
 const { pool } = require('../helpers/database');
@@ -27,7 +27,9 @@ userRouter.post('/news_in_category_with_interactions', async (req: Request, res:
     if(data.limit != null) {
         limit = data.limit;
     }
-    res.json(await getNewsInCategoryWithInteractions(categoryIdx, limit, userIdx));
+
+    const news = await getNewsInCategoryWithInteractions(categoryIdx, limit, userIdx);
+    res.json(news);
 });
 
 /**
@@ -47,6 +49,19 @@ userRouter.get('/categories/:uid', async (req: Request, res: Response) => {
         topics: topics,
         userCategories: userCategorySubscriptions.categories
     });
+});
+
+/**
+ * 유저가 뉴스, 글 등을 읽었다는 로그를 기록
+ */
+userRouter.post('/read/:type', async (req: Request, res: Response) => {
+    const type:string = req.params.type;
+    const data:any = req.body;
+    const userIdx = await findUserIdxFromUid(data.uid);
+    const newsIdx = data.newsIdx;
+
+    await insertReadLog(userIdx, type, newsIdx);
+    res.sendStatus(200);
 });
 
 /**

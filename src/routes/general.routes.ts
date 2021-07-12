@@ -5,7 +5,6 @@ const { pool } = require('../helpers/database');
 const generalRouter = Router();
 
 generalRouter.get('/meta/:screen', async(req:Request, res:Response) => {
-    console.log('start meta/main');
     const screen:string = req.params.screen;
     // 메인화면 메타
     if(screen == 'main') {

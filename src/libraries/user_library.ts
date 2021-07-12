@@ -312,12 +312,16 @@ export async function getUserCurrentPlan(userIdx:number) {
     }
 }
 
-export default {
-    checkUserExists,
-    updateUserDeviceDataFlow,
-    findUserIdxFromUid,
-    getUserPushOnOff,
-    setUserPushOnOff,
-    getUserSubscriptionData,
-    setUserCategoryNotificationOption
+/**
+ * 유저가 뉴스 읽음 처리
+ */
+export async function insertReadLog(userIdx:number, articleType:string, articleIdx:number) {
+    let insertReadLogSql = "INSERT INTO `user_view_logs`(`user_idx`, `article_type`, `article_idx`) VALUES (?, ?, ?)";
+    try {
+        const insertResult = await pool.promise().query(insertReadLogSql, [userIdx, articleType, articleIdx]);
+        return insertResult[0].insertId;
+    } catch(err) {
+        console.error(err.message);
+        throw err;
+    }
 }
