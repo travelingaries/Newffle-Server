@@ -1,6 +1,9 @@
 import {Request, Response, Router} from 'express';
-import {RowDataPacket} from "mysql";
-import {findCategoryIdx, getCategories} from "../libraries/news_library";
+import {
+    findCategoryIdx,
+    getCategories,
+    getNewsInCategoryWithInteractions
+} from "../libraries/news_library";
 import {
     findUserIdxFromUid,
     getUserSubscriptionData,
@@ -11,6 +14,21 @@ import {
 const { pool } = require('../helpers/database');
 
 const userRouter = Router();
+
+/**
+ * 유저가 조회 가능한 조회 등 반응 정보 포함된 카테고리의 뉴스 불러오기
+ */
+userRouter.post('/news_in_category_with_interactions', async (req: Request, res: Response) => {
+    let data:any = req.body;
+    const categoryIdx:number = await findCategoryIdx(data.category);
+    const userIdx = await findUserIdxFromUid(data.uid);
+
+    let limit:number = 20;
+    if(data.limit != null) {
+        limit = data.limit;
+    }
+    res.json(await getNewsInCategoryWithInteractions(categoryIdx, limit, userIdx));
+});
 
 /**
  * 유저의 관심분야들을 불러오기

@@ -50,7 +50,6 @@ export async function getCategories(onlyVisible:boolean = true, categories:strin
     if(categories.length > 0) {
         categoriesSql += " AND category IN (";
         for(const category of categories) {
-            console.log('category in loop:', category);
             categoriesSql += "'" + category + "'";
             if(categories.indexOf(category) < categories.length - 1) {
                 categoriesSql += ", ";
@@ -95,6 +94,41 @@ export async function getNewsInCategory(categoryIdx:number, limit:number) {
     let newsInCategoriesSql = "SELECT *, TIMESTAMPDIFF(MINUTE, news.created_time, CURRENT_TIMESTAMP) as diff_minutes FROM `news` JOIN `news_categories_map` ON news_categories_map.news_idx = news.idx WHERE news_categories_map.category_idx=? ORDER BY news.idx DESC LIMIT ?";
     try {
         const [queryResults] = await pool.promise().query(newsInCategoriesSql, [categoryIdx, limit]);
+        for(let i:number = 0; i < queryResults.length; i++) {
+            let diffMinutes: number = queryResults[i].diff_minutes;
+            let diffHours: number = 0;
+            let diffDays: number = 0;
+            if (diffMinutes >= 60) {
+                diffHours = Math.floor(diffMinutes / 60);
+                diffMinutes %= 60;
+                queryResults[i].diffHours = diffHours;
+                queryResults[i].diffMinutes = diffMinutes;
+            } else {
+                queryResults[i].diffMinutes = diffMinutes;
+            }
+            if (diffHours >= 24) {
+                diffDays = Math.floor(diffHours / 24);
+                diffHours %= 24;
+                queryResults[i].diffDays = diffDays;
+                queryResults[i].diffHours = diffHours;
+            }
+        }
+        return queryResults;
+    } catch(err) {
+        console.error(err);
+        throw err;
+    }
+}
+
+export async function getNewsInCategoryWithInteractions(categoryIdx:number, limit:number, userIdx:number) {
+    let newsInCategoriesSql = "SELECT *, TIMESTAMPDIFF(MINUTE, news.created_time, CURRENT_TIMESTAMP) as diff_minutes," +
+        " (SELECT COUNT(*) FROM user_view_logs WHERE user_view_logs.user_idx=? AND user_view_logs.article_type='news' AND user_view_logs.article_idx=news.idx) as my_views" +
+        " FROM `news`" +
+        " JOIN `news_categories_map` ON news_categories_map.news_idx = news.idx" +
+        " WHERE news_categories_map.category_idx=?" +
+        " ORDER BY news.idx DESC LIMIT ?";
+    try {
+        const [queryResults] = await pool.promise().query(newsInCategoriesSql, [userIdx, categoryIdx, limit]);
         for(let i:number = 0; i < queryResults.length; i++) {
             let diffMinutes: number = queryResults[i].diff_minutes;
             let diffHours: number = 0;
@@ -170,11 +204,42 @@ export async function getPopularNews(limit:number = 5) {
     }
 }
 
-export default {
-    findCategoryIdx,
-    updateCategories,
-    getCategories,
-    getNewsInCategory,
-    saveNewsCategoriesMap,
-    getPopularNews,
+/**
+ * 실시간 조회수 TOP 뉴스 불러오기
+ * @param limit
+ */
+export async function getPopularNewsWithInteractions(userIdx:number, limit:number = 5) {
+    let searchPopularNewsSql = "SELECT `user_view_logs`.`article_idx`, COUNT(*) as `count`," +
+        " (SELECT COUNT(*) FROM user_view_logs as uv_logs WHERE uv_logs.user_idx=? AND uv_logs.article_type='news' AND uv_logs.article_idx=user_view_logs.article_idx) as my_views," +
+        " `news`.`title`, `news`.`from`, `news`.`url`, `news`.`body`, `news`.`created_time`," +
+        " TIMESTAMPDIFF(MINUTE, news.created_time, CURRENT_TIMESTAMP) as diff_minutes" +
+        " FROM `user_view_logs`" +
+        " JOIN `news` ON news.idx=user_view_logs.article_idx" +
+        " WHERE `article_type`='news' GROUP BY `user_view_logs`.`article_idx` ORDER BY `count` DESC LIMIT ?";
+    try {
+        const [queryResults] = await pool.promise().query(searchPopularNewsSql, [userIdx, limit]);
+        for(let i:number = 0; i < queryResults.length; i++) {
+            let diffMinutes: number = queryResults[i].diff_minutes;
+            let diffHours: number = 0;
+            let diffDays: number = 0;
+            if (diffMinutes >= 60) {
+                diffHours = Math.floor(diffMinutes / 60);
+                diffMinutes %= 60;
+                queryResults[i].diffHours = diffHours;
+                queryResults[i].diffMinutes = diffMinutes;
+            } else {
+                queryResults[i].diffMinutes = diffMinutes;
+            }
+            if (diffHours >= 24) {
+                diffDays = Math.floor(diffHours / 24);
+                diffHours %= 24;
+                queryResults[i].diffDays = diffDays;
+                queryResults[i].diffHours = diffHours;
+            }
+        }
+        return queryResults;
+    } catch(err) {
+        console.error(err.message);
+        throw err;
+    }
 }
