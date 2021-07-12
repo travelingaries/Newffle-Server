@@ -5,6 +5,7 @@ const { pool } = require('../helpers/database');
 const generalRouter = Router();
 
 generalRouter.get('/meta/:screen', async(req:Request, res:Response) => {
+    console.log('start meta/main');
     const screen:string = req.params.screen;
     // 메인화면 메타
     if(screen == 'main') {
@@ -24,7 +25,7 @@ generalRouter.get('/meta/:screen', async(req:Request, res:Response) => {
             }
         }
         if(worktime) {
-            const hour:number = parseInt(((new Date()).toLocaleTimeString("ko-KR", {timeZone: "Asia/Seoul", hour: 'numeric', minute: 'numeric'})).substr(3).split(':')[0]);
+            const hour:number = parseInt(((new Date()).toLocaleTimeString("ko-KR", {timeZone: "Asia/Seoul", hour: 'numeric', minute: 'numeric', hour12: false})).split(':')[0]);
             if(hour < 8 || hour === 12 || hour >= 16) {
                 worktime = false;
             }
