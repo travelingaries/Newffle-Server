@@ -1,4 +1,5 @@
 import {RowDataPacket} from "mysql";
+import {datetimeString} from "./time_library";
 
 const { pool } = require('../helpers/database');
 
@@ -184,6 +185,27 @@ async function updateFcmToken(userIdx: number, fcmToken: String, os: String) {
     } catch(err) {
         console.error(err.message);
         throw(err);
+    }
+}
+
+export async function updateUserCurrentPlan(userIdx: number) {
+    let searchUserCurrentPlanSql = "SELECT * FROM `user_current_plan` WHERE user_idx=? ORDER BY idx DESC";
+    try {
+        const [queryResults] = await pool.promise().query(searchUserCurrentPlanSql, [userIdx]);
+        if(!queryResults[0]) {
+            // 유저의 현재 기기 정보가 저장되어 있지 않은 경우 새로 저장
+            let insertUserCurrentPlan = "INSERT INTO `user_current_plan`(`user_idx`, `plan`, `status`, `valid_until`) VALUES (?, ?, ?, ?)";
+            let datetime1MonthLater = datetimeString("ISO", {changeMonthBy: 1});
+            try {
+                const insertResult = await pool.promise().query(insertUserCurrentPlan, [userIdx, 1, 1, datetime1MonthLater]);
+                return insertResult[0].insertId;
+            } catch(err) {
+                throw err;
+            }
+        }
+    } catch(err) {
+        console.error(err.message);
+        throw err;
     }
 }
 

@@ -1,6 +1,6 @@
 import {Request, Response, Router} from 'express';
 import {Md5} from 'ts-md5/dist/md5';
-import {checkUserExists, updateUserDeviceDataFlow} from "../libraries/user_library";
+import {checkUserExists, updateUserCurrentPlan, updateUserDeviceDataFlow} from "../libraries/user_library";
 
 const { pool } = require('../helpers/database');
 
@@ -25,6 +25,7 @@ accountRouter.post('/signup', async (req: Request, res: Response) => {
             );
             const userIdx: number = insertResult.insertId;
             await updateUserDeviceDataFlow(userIdx, data);
+            await updateUserCurrentPlan(userIdx);
 
             res.sendStatus(200);
         } catch(err) {
