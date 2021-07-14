@@ -225,6 +225,22 @@ export async function findUserIdxFromUid(uid:string) {
     }
 }
 
+export async function getUserDataFromUid(uid:string) {
+    let searchUserSql = "SELECT * FROM users WHERE firebase_uid=?";
+    try {
+        const [queryResult] = await pool.promise().query(searchUserSql, [uid]);
+        if(!queryResult[0]) {
+            console.error('no user found');
+            return [];
+        } else {
+            return queryResult[0];
+        }
+    } catch(err) {
+        console.error(err);
+        return -1;
+    }
+}
+
 /**
  * 유저 푸시 전체를 받을지 말지 설정을 조회
  * @param userIdx number

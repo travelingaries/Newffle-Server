@@ -8,7 +8,7 @@ import {
     findUserIdxFromUid,
     getUserSubscriptionData,
     getUserPushOnOff, setUserCategoryNotificationOption,
-    setUserPushOnOff, insertReadLog
+    setUserPushOnOff, insertReadLog, getUserDataFromUid
 } from "../libraries/user_library";
 import {datetimeString} from "../libraries/time_library";
 
@@ -142,6 +142,18 @@ userRouter.post('/categories/notifications/category', async(req:Request, res:Res
     const categoryNotification:number = data.categoryNotification;
     await setUserCategoryNotificationOption(userIdx, categoryIdx, categoryNotification)
     res.sendStatus(200);
+});
+
+/**
+ * 유저의 계정 설정들 불러오기
+ */
+userRouter.post('/account_settings', async(req:Request, res:Response) => {
+    console.log('start account_settings');
+   const data:any = req.body;
+   const uid:string = data.uid;
+   const user:number = await getUserDataFromUid(uid);
+   console.log(user);
+   res.json(user);
 });
 
 export default userRouter;
