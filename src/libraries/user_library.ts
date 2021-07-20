@@ -1,6 +1,6 @@
 import {RowDataPacket} from "mysql";
 import {datetimeString} from "./time_library";
-import {subscribeTokensToTopic, unsubscribeTokensFromTopic} from "./push_library";
+import {subscribeTokensToTopic, subscribeToOSAndroidTopic, unsubscribeTokensFromTopic} from "./push_library";
 
 const { pool } = require('../helpers/database');
 
@@ -30,6 +30,9 @@ export async function updateUserDeviceDataFlow(userIdx: number, data: { os: stri
     const deviceInfoIdx: number = await updateDeviceInfo(userIdx, data.os, data.version, data.osVersion);
     await updateUserDeviceLog(userIdx, deviceInfoIdx);
     await updateUserCurrentDevice(userIdx, deviceInfoIdx, data.fcmToken);
+    if(data.os == "android") {
+        await subscribeToOSAndroidTopic(data.fcmToken);
+    }
 }
 
 /**
