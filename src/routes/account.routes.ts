@@ -34,8 +34,9 @@ accountRouter.post('/signup', async (req: Request, res: Response) => {
         }
     }
 });
+
 accountRouter.post('/login', async (req: Request, res: Response) => {
-    let data: any = req.body;
+    let data:any = req.body;
     let loginUserSql = "SELECT * FROM `users` WHERE email=? AND password=?";
 
     try {
@@ -58,6 +59,11 @@ accountRouter.post('/login', async (req: Request, res: Response) => {
         console.error(err.message);
         res.sendStatus(400);
     }
+});
+
+accountRouter.post('/delete_account', async (req:Request, res:Response) => {
+   let data:any = req.body;
+   res.sendStatus(200);
 });
 
 export default accountRouter;

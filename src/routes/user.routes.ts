@@ -6,11 +6,10 @@ import {
 } from "../libraries/news_library";
 import {
     findUserIdxFromUid,
-    getUserSubscriptionData,
+    getUserCategorySubscriptionData,
     getUserPushOnOff, setUserCategoryNotificationOption,
     setUserPushOnOff, insertReadLog, getUserDataFromUid
 } from "../libraries/user_library";
-import {datetimeString} from "../libraries/time_library";
 
 const { pool } = require('../helpers/database');
 
@@ -44,7 +43,7 @@ userRouter.get('/categories/:uid', async (req: Request, res: Response) => {
     const categories:string[] = categoryData.categories;
     const topics:string[] = categoryData.topics;
 
-    const userCategorySubscriptions = await getUserSubscriptionData(userIdx)
+    const userCategorySubscriptions = await getUserCategorySubscriptionData(userIdx)
     res.json({
         categories: categories,
         topics: topics,
@@ -111,7 +110,7 @@ userRouter.post('/categories/notifications', async (req:Request, res:Response) =
     const userIdx:number = await findUserIdxFromUid(uid);
 
     const userPushOn = await getUserPushOnOff(userIdx);
-    const userCategoryNotificationOptions = await getUserSubscriptionData(userIdx)
+    const userCategoryNotificationOptions = await getUserCategorySubscriptionData(userIdx)
     const userNotificationOptions = {
         'pushOn' : userPushOn,
         'categories': userCategoryNotificationOptions.categories,
@@ -148,11 +147,9 @@ userRouter.post('/categories/notifications/category', async(req:Request, res:Res
  * 유저의 계정 설정들 불러오기
  */
 userRouter.post('/account_settings', async(req:Request, res:Response) => {
-    console.log('start account_settings');
    const data:any = req.body;
    const uid:string = data.uid;
    const user:number = await getUserDataFromUid(uid);
-   console.log(user);
    res.json(user);
 });
 

@@ -1,6 +1,4 @@
 import {Request, Response, Router} from 'express';
-import {findCategoryIdx, getCategories, saveNewsCategoriesMap} from "../libraries/news_library";
-import {sendNewsFcmPush} from "../libraries/push_library";
 
 const { pool } = require('../helpers/database');
 

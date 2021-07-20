@@ -10,7 +10,3 @@ export async function getLatestPartnerInsights(limit:number = 10) {
         throw err;
     }
 }
-
-export default {
-    getLatestPartnerInsights,
-}
