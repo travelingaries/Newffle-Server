@@ -12,7 +12,7 @@ boardRouter.post('/meta', async (req: Request, res: Response) => {
 
     const userPlan = await getUserCurrentPlan(userIdx);
     const popularNews = await getPopularNewsWithInteractions(userIdx);
-    const insights = await getLatestPartnerInsights();
+    const insights = await getLatestPartnerInsights(7);
 
     res.json({
         'userPlan': userPlan,
