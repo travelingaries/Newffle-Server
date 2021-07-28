@@ -58,10 +58,14 @@ userRouter.post('/read/:type', async (req: Request, res: Response) => {
     const type:string = req.params.type;
     const data:any = req.body;
     const userIdx = await findUserIdxFromUid(data.uid);
-    const newsIdx = data.newsIdx;
+    const articleIdx = data.articleIdx;
 
-    await insertReadLog(userIdx, type, newsIdx);
-    res.sendStatus(200);
+    if(articleIdx) {
+        await insertReadLog(userIdx, type, articleIdx);
+        res.sendStatus(200);
+    } else {
+        res.sendStatus(403);
+    }
 });
 
 /**
