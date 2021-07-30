@@ -30,9 +30,6 @@ export async function updateUserDeviceDataFlow(userIdx: number, data: { os: stri
     const deviceInfoIdx: number = await updateDeviceInfo(userIdx, data.os, data.version, data.osVersion);
     await updateUserDeviceLog(userIdx, deviceInfoIdx);
     await updateUserCurrentDevice(userIdx, deviceInfoIdx, data.fcmToken);
-    if(data.os == "android") {
-        await subscribeToOSAndroidTopic(data.fcmToken);
-    }
 }
 
 /**
@@ -121,8 +118,8 @@ export async function updateUserCurrentDevice(userIdx: number, deviceInfoIdx: nu
             break;
     }
     maxDevices = 3;
-    let searchCurrentDeviceSql = "SELECT idx, device_info_idx, fcm_token" +
-        " FROM `user_current_device` WHERE user_idx=? AND STATUS=1 GROUP BY idx ORDER BY updated_time ASC";
+    let searchCurrentDeviceSql = "SELECT idx, device_info_idx, fcm_token, `status`" +
+        " FROM `user_current_device` WHERE user_idx=? GROUP BY idx ORDER BY updated_time ASC";
     try {
         const [queryResults] = await pool.promise().query(searchCurrentDeviceSql, [userIdx, deviceInfoIdx, fcmToken, userIdx]);
         let activeFcmTokens:string[] = [];
@@ -140,10 +137,14 @@ export async function updateUserCurrentDevice(userIdx: number, deviceInfoIdx: nu
                 throw err;
             }
         } else {
+            let previousRow = null;
             for(const row of queryResults) {
-                activeFcmTokens.push(row.fcm_token);
+                if(row.status != 0) {
+                    activeFcmTokens.push(row.fcm_token);
+                }
                 if(row.device_info_idx == deviceInfoIdx && row.fcm_token == fcmToken) {
                     idx = row.idx;
+                    previousRow = row;
                 }
             }
             // 유저의 현재 기기 정보가 저장되어 있지 않은 경우 새로 저장
@@ -158,8 +159,24 @@ export async function updateUserCurrentDevice(userIdx: number, deviceInfoIdx: nu
                     throw err;
                 }
             }
+            // 유저의 현재 기기 정보가 저장되어 있는데 status가 0인 경우 되살리기
+            else if(previousRow != null) {
+                if(previousRow.status == 0) {
+                    let reactivatePreviousDeviceSql = "UPDATE `user_current_device` SET `status`=1 WHERE `idx`=?";
+                    try {
+                        const updateResult = await pool.promise().query(reactivatePreviousDeviceSql, [idx]);
+                    } catch(err) {
+                        console.error(err.message);
+                        throw err;
+                    }
+                }
+            }
+
             if(activeFcmTokens.length > maxDevices) {
                 for(let i = 0; i < activeFcmTokens.length - maxDevices; i++) {
+                    if(queryResults[i].fcm_token == fcmToken) {
+                        continue;
+                    }
                     let updatePreviousDeviceStatusSql = "UPDATE `user_current_device` SET `status`=0 WHERE `idx`=?";
                     try {
                         const updateResult = await pool.promise().query(updatePreviousDeviceStatusSql, [queryResults[i].idx]);
