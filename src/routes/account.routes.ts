@@ -1,10 +1,25 @@
 import {Request, Response, Router} from 'express';
 import {Md5} from 'ts-md5/dist/md5';
-import {checkUserExists, updateUserCurrentPlan, updateUserDeviceDataFlow} from "../libraries/user_library";
+import {
+    checkUserExists,
+    saveUserVerification,
+    updateUserCurrentPlan,
+    updateUserDeviceDataFlow
+} from "../libraries/user_library";
 
 const { pool } = require('../helpers/database');
 
 const accountRouter = Router();
+
+accountRouter.post('/check_already_signed_up', async (req: Request, res: Response) => {
+    let data:any = req.body;
+    const userExists = await checkUserExists(data.email);
+    if(userExists) {
+        res.sendStatus(401);
+    } else {
+        res.sendStatus(200);
+    }
+});
 
 accountRouter.post('/signup', async (req: Request, res: Response) => {
     let data:any = req.body;
@@ -26,6 +41,10 @@ accountRouter.post('/signup', async (req: Request, res: Response) => {
             const userIdx: number = insertResult.insertId;
             await updateUserDeviceDataFlow(userIdx, data);
             await updateUserCurrentPlan(userIdx);
+
+            if(data.emailVerified == "true") {
+                await saveUserVerification(userIdx, data.emailVerified);
+            }
 
             res.sendStatus(200);
         } catch(err) {

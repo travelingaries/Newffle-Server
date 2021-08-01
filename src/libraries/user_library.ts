@@ -200,6 +200,40 @@ export async function updateUserCurrentDevice(userIdx: number, deviceInfoIdx: nu
 }
 
 /**
+ * 유저가 기존에 인증한 내역이 있는지를 확인
+ */
+export async function checkUserVerification(userIdx:number, type:string = 'email') {
+    let searchVerificationSql = "SELECT * FROM `user_verifications` WHERE user_idx=? AND `type`=? LIMIT 1";
+    try {
+        const [queryResults] = await pool.promise().query(searchVerificationSql, [userIdx, type]);
+        if(!queryResults[0]) {
+            return false;
+        } else {
+            return true;
+        }
+    } catch(err) {
+        console.error(err.message);
+        throw err;
+    }
+}
+
+/**
+ * 유저가 이메일, 핸드폰 번호 등을 인증했을 시 인증 기록
+ */
+export async function saveUserVerification(userIdx:number, type:string = 'email') {
+    if(await checkUserVerification(userIdx, type)) {
+        return;
+    }
+    let insertVerificationSql = "INSERT INTO `user_verifications`(`user_idx`, `type`) VALUES (?, ?)";
+    try {
+        const [insertResult] = await pool.promise().query(insertVerificationSql, [userIdx, type]);
+    } catch(err) {
+        console.error(err.message);
+        throw err;
+    }
+}
+
+/**
  * 유저가 새 FCM 토큰 발급받은 경우, 관심 분야 푸시 구독
  * @param fcmToken
  */
