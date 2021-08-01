@@ -1,7 +1,8 @@
 import {Request, Response, Router} from 'express';
 import {getMediaSummaries, getPartnerInsights} from "../libraries/board_library";
 import {getPopularNewsWithInteractions} from "../libraries/news_library";
-import {findUserIdxFromUid, getUserCurrentPlan} from "../libraries/user_library";
+import {getUserCurrentPlan} from "../libraries/user_library";
+import {findUserIdxFromUid} from "../libraries/account_library";
 
 const boardRouter = Router();
 

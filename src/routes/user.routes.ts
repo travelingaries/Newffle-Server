@@ -5,15 +5,22 @@ import {
     getNewsInCategoryWithInteractions
 } from "../libraries/news_library";
 import {
-    findUserIdxFromUid,
     getUserCategorySubscriptionData,
     getUserPushOnOff, setUserCategoryNotificationOption,
-    setUserPushOnOff, insertReadLog, getUserDataFromUid
+    setUserPushOnOff, insertReadLog
 } from "../libraries/user_library";
+//import {subscribeToOSAndroidTopic} from "../libraries/push_library";
+import {checkUserVerification, findUserIdxFromUid, getUserDataFromUid} from "../libraries/account_library";
 
 const { pool } = require('../helpers/database');
 
 const userRouter = Router();
+/*
+userRouter.get('/test/:fcmToken', async(req:Request, res:Response) => {
+    const fcmToken = req.params.fcmToken;
+    await subscribeToOSAndroidTopic(fcmToken);
+    res.sendStatus(200);
+});*/
 
 /**
  * 유저가 조회 가능한 조회 등 반응 정보 포함된 카테고리의 뉴스 불러오기
@@ -153,7 +160,8 @@ userRouter.post('/categories/notifications/category', async(req:Request, res:Res
 userRouter.post('/account_settings', async(req:Request, res:Response) => {
    const data:any = req.body;
    const uid:string = data.uid;
-   const user:number = await getUserDataFromUid(uid);
+   const user:any = await getUserDataFromUid(uid);
+   user.emailVerified = await checkUserVerification(user.idx, 'email');
    res.json(user);
 });
 
